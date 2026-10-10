@@ -280,3 +280,6 @@ input[type="range"] { accent-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+.file-drop-overlay { position: fixed; inset: 12px; z-index: 1000; display: grid; place-items: center; border: 3px dashed #74ddbd; border-radius: 20px; background: #101d30ed; color: #e8fff7; font-size: clamp(20px, 3vw, 36px); font-weight: 700; pointer-events: none; }
+

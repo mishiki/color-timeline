@@ -220,6 +220,22 @@ async function importJSON(file){
   status('解析データを保存しています…');await putProject(project);for(const s of data.samples)await putSample(project.id,s);await persistProject();await refreshProjects();await selectProject(project.id);status('解析データを読み込みました。動画本体は含まれていません。');
 }
 $('openBtn').onclick=()=>chooseFile();$('reconnectBtn').onclick=reconnect;$('captureBtn').onclick=capture;
+let fileDragDepth=0;
+const isFileDrag=e=>Array.from(e.dataTransfer?.types||[]).includes('Files');
+function clearFileDrag(){fileDragDepth=0;$('fileDropOverlay').hidden=true;}
+window.addEventListener('dragenter',e=>{if(!isFileDrag(e))return;e.preventDefault();fileDragDepth++;$('fileDropOverlay').hidden=false;});
+window.addEventListener('dragover',e=>{if(!isFileDrag(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
+window.addEventListener('dragleave',e=>{if(!isFileDrag(e))return;if(--fileDragDepth<=0)clearFileDrag();});
+window.addEventListener('dragend',clearFileDrag);
+window.addEventListener('drop',e=>{
+  if(!isFileDrag(e))return;
+  e.preventDefault();clearFileDrag();
+  const files=Array.from(e.dataTransfer.files);
+  if(files.length!==1){status('動画または画像を1ファイルずつドロップしてください。',true);return;}
+  const file=files[0];
+  if(!/^(video|image)\//.test(file.type)){status('動画または画像のファイルをドロップしてください。',true);return;}
+  persistProject().then(()=>loadFile(file)).catch(fail);
+});
 $('fileInput').onchange=e=>loadFile(e.target.files[0],null,e.target.dataset.reconnect==='true').catch(fail).finally(()=>{e.target.value='';});
 $('projectSelect').onchange=e=>selectProject(e.target.value).catch(fail);$('startBtn').onclick=scan;
 $('pauseBtn').onclick=()=>{if(stream){for(const track of stream.getTracks())track.stop();stream=null;persistProject().then(refreshProjects).catch(fail);$('pauseBtn').disabled=true;status('キャプチャを停止しました。');}else{cancelScan();persistProject().catch(fail);}};
