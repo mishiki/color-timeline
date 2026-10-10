@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b1220">
+    <meta name="description" content="動画・画像の色彩をブラウザー内で解析し、時間軸に沿って記録する Color Timeline。">
+    <title>Color Timeline — ローカル色彩分析</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#main" aria-label="Color Timeline ホーム">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="brand-copy">
+            <span class="brand-name">Color Timeline</span>
+            <span class="brand-caption">LOCAL COLOR WORKSTATION</span>
+          </span>
+        </a>
+
+        <div class="topbar-actions" aria-label="メディアと解析の操作">
+          <input id="fileInput" class="visually-hidden" type="file" accept="video/*,image/*" tabindex="-1">
+          <button id="openBtn" class="button button-primary" type="button">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.25v9.5m0 0 3.5-3.5m-3.5 3.5-3.5-3.5M4 13.75v2A1.25 1.25 0 0 0 5.25 17h9.5A1.25 1.25 0 0 0 16 15.75v-2"/></svg>
+            動画・画像を開く
+          </button>
+          <button id="captureBtn" class="button button-secondary" type="button">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.25 6.5h3l1.2-1.75h5.1l1.2 1.75h3v9.25H3.25z"/><circle cx="10" cy="11" r="2.75"/></svg>
+            タブ・画面を解析
+          </button>
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <label class="select-wrap project-select-wrap">
+            <span class="visually-hidden">保存済み解析</span>
+            <select id="projectSelect" aria-label="保存済み解析">
+              <option value="">保存済み解析を選択</option>
+            </select>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+          </label>
+          <button id="reconnectBtn" class="button button-quiet" type="button" aria-label="保存済み解析の元ファイルを再指定">
+            元ファイルを再指定
+          </button>
+        </div>
+      </header>
+
+      <main id="main" class="main-content">
+        <section class="workspace" aria-label="色彩分析ワークスペース">
+          <div class="editor-column">
+            <section class="media-panel panel" aria-label="メディアプレビュー">
+              <div class="panel-heading media-heading">
+                <div>
+                  <span class="eyebrow">SOURCE</span>
+                  <h1>プレビュー</h1>
+                </div>
+                <span class="local-indicator"><span></span>この端末内で処理</span>
+              </div>
+              <div class="media-stage" id="mediaStage">
+                <video id="player" controls playsinline preload="metadata" aria-label="解析対象の動画" hidden></video>
+                <img id="still" alt="解析対象の画像" hidden>
+                <div id="mediaPlaceholder" class="empty-state">
+                  <div class="empty-illustration" aria-hidden="true">
+                    <span class="frame-corner corner-tl"></span><span class="frame-corner corner-tr"></span>
+                    <span class="frame-corner corner-bl"></span><span class="frame-corner corner-br"></span>
+                    <span class="empty-sun"></span><span class="empty-hill empty-hill-back"></span><span class="empty-hill empty-hill-front"></span>
+                    <span class="empty-play"><svg viewBox="0 0 20 20"><path d="m7 4.8 8 5.2-8 5.2z"/></svg></span>
+                  </div>
+                  <p class="empty-title">解析するメディアを開く</p>
+                  <p class="empty-copy">動画または画像を選択してください。<br>ファイルはアップロードされず、このブラウザー内で処理されます。</p>
+                  <span class="text-button-hint">上部の「動画・画像を開く」から選択</span>
+                </div>
+              </div>
+              <div class="media-footnote">
+                <span class="footnote-icon" aria-hidden="true">i</span>
+                <span>タブ・画面の解析は、再生されている映像だけを記録します。先のフレームを読み進めません。</span>
+              </div>
+            </section>
+
+            <section class="timeline-panel panel" aria-label="色彩のタイムライン">
+              <div class="panel-heading timeline-heading">
+                <div>
+                  <span class="eyebrow">COLOR TIMELINE</span>
+                  <h2>時間ごとの色の変化</h2>
+                </div>
+                <div class="timeline-tools">
+                  <label class="inline-select"><span>表示</span>
+                    <span class="select-wrap compact-select">
+                      <select id="topN" aria-label="表示する色の数">
+                        <option value="5">上位 5 色</option><option value="4">上位 4 色</option><option value="3">上位 3 色</option>
+                      </select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+                    </span>
+                  </label>
+                  <label class="inline-select"><span>範囲</span>
+                    <span class="select-wrap compact-select">
+                      <select id="zoom" aria-label="タイムラインの表示範囲">
+                        <option value="full">全体</option><option value="30">30 秒</option><option value="10">10 秒</option>
+                      </select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="timeline-plot-wrap">
+                <div class="timeline-y-labels" aria-hidden="true"><span>色</span><span>時間</span></div>
+                <canvas id="timeline" width="1200" height="180" role="img" aria-label="解析結果の色彩タイムライン"></canvas>
+                <div id="timelineEmptyHint" class="timeline-empty-hint" aria-hidden="true">解析結果がここに表示されます</div>
+              </div>
+              <div class="scrub-row">
+                <span id="timelineStart" class="time-label">00:00</span>
+                <input id="scrub" type="range" min="0" max="100" step="0.001" value="0" disabled aria-label="タイムラインを移動">
+                <span id="timelineEnd" class="time-label">00:00</span>
+              </div>
+            </section>
+
+            <section class="analysis-panel panel" aria-label="解析操作と書き出し">
+              <div class="analysis-controls">
+                <div class="analysis-primary-actions">
+                  <button id="startBtn" class="button button-accent" type="button">
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7 4.75 8 5.25-8 5.25z"/></svg>
+                    先読み解析
+                  </button>
+                  <button id="pauseBtn" class="button button-outline" type="button" disabled>
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10m6-10v10"/></svg>
+                    停止
+                  </button>
+                </div>
+                <label class="setting-control interval-control"><span>サンプリング間隔</span>
+                  <span class="select-wrap">
+                    <select id="sampleInterval" aria-label="サンプリング間隔">
+                      <option value="1">1 秒</option><option value="0.5">0.5 秒</option><option value="0.2">0.2 秒</option><option value="0.1">0.1 秒</option><option value="0.033333333333">約 1/30 秒</option>
+                    </select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+                  </span>
+                </label>
+                <label class="setting-control order-control"><span>色の並び</span>
+                  <span class="select-wrap">
+                    <select id="paletteOrder" aria-label="色の並び">
+                      <option value="area">面積順</option><option value="hue">色相順</option>
+                    </select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+                  </span>
+                </label>
+                <div class="export-controls" aria-label="解析結果を書き出す">
+                  <button id="exportJsonBtn" class="button button-quiet export-button" type="button" title="解析データをJSONで書き出す"><span class="export-icon">{ }</span> JSON</button>
+                  <button id="importJsonBtn" class="button button-quiet export-button" type="button" title="解析データをJSONから読み込む"><span class="export-icon">↥</span> 読み込み</button>
+                  <input id="importJsonFile" class="visually-hidden" type="file" accept=".json,application/json" tabindex="-1">
+                  <button id="exportPngBtn" class="button button-quiet export-button" type="button" title="タイムラインをPNGで書き出す"><span class="export-icon export-png-icon">▧</span> タイムラインPNG</button>
+                  <button id="exportCsvBtn" class="button button-quiet export-button" type="button" title="色データをCSVで書き出す"><span class="export-icon">⇩</span> CSV</button>
+                </div>
+              </div>
+              <div class="analysis-progress-row">
+                <span id="status" role="status" aria-live="polite">ファイルを開くと解析できます。</span>
+                <span id="progressLabel" class="progress-label">待機中</span>
+              </div>
+              <progress id="analysisProgress" max="100" value="0" aria-label="解析の進捗"></progress>
+            </section>
+          </div>
+
+          <aside class="inspector-column" aria-label="現在の色とパレット">
+            <section class="current-panel panel">
+              <div class="panel-heading">
+                <div><span class="eyebrow">CURRENT FRAME</span><h2>現在のフレーム</h2></div>
+              </div>
+              <div class="current-time-row"><span class="current-time-label">再生位置</span><output id="currentTime" class="current-time">00:00:00.000</output></div>
+              <div id="currentPalette" class="current-palette" aria-label="現在のフレームの色">
+                <div class="palette-placeholder"><span class="palette-placeholder-mark" aria-hidden="true">◌</span><span>フレームを解析すると<br>色が表示されます</span></div>
+              </div>
+              <div id="paletteLegend" class="palette-legend" aria-label="色と構成比の凡例"></div>
+            </section>
+
+            <section class="settings-panel panel">
+              <details id="settingsDetails">
+                <summary>
+                  <span class="summary-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 3.5v2m0 9v2m6.5-6.5h-2m-9 0h-2m11.1-4.6-1.4 1.4m-6.4 6.4-1.4 1.4m9.2 0-1.4-1.4M6.7 6.7 5.3 5.3"/><circle cx="10" cy="10" r="3.1"/></svg></span>
+                  <span class="summary-copy"><strong>解析設定</strong><small>色の抽出方法を調整</small></span>
+                  <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+                </summary>
+                <div class="settings-content">
+                  <div class="range-setting"><div class="range-heading"><label for="hueMerge">近似色のまとめ幅</label><output id="hueMergeOut" for="hueMerge">18°</output></div><input id="hueMerge" type="range" min="0" max="45" step="1" value="18"><span class="range-endpoints"><span>細かく</span><span>まとめる</span></span></div>
+                  <div class="range-setting"><div class="range-heading"><label for="neutralSat">無彩色とみなす彩度</label><output id="neutralSatOut" for="neutralSat">0.08</output></div><input id="neutralSat" type="range" min="0" max="0.16" step="0.01" value="0.08"><span class="range-endpoints"><span>低い</span><span>高い</span></span></div>
+                  <div class="range-setting"><div class="range-heading"><label for="accentSat">アクセント色の彩度</label><output id="accentSatOut" for="accentSat">0.58</output></div><input id="accentSat" type="range" min="0.3" max="0.9" step="0.02" value="0.58"><span class="range-endpoints"><span>低い</span><span>高い</span></span></div>
+                  <div class="range-setting"><div class="range-heading"><label for="accentMinArea">アクセント色の最小面積</label><output id="accentMinAreaOut" for="accentMinArea">0.4%</output></div><input id="accentMinArea" type="range" min="0.1" max="3" step="0.1" value="0.4"><span class="range-endpoints"><span>小さい</span><span>大きい</span></span></div>
+                  <label class="setting-control sample-size-control"><span>解析サイズ</span><span class="select-wrap"><select id="sampleSize" aria-label="解析サイズ"><option value="96">96 px</option><option value="192" selected>192 px</option><option value="320">320 px</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></span></label>
+                  <button id="applySettingsBtn" class="button button-secondary apply-settings" type="button">設定を適用して別解析</button>
+                </div>
+              </details>
+            </section>
+
+            <section class="notes-panel panel" aria-label="解析について">
+              <span class="notes-icon" aria-hidden="true">⌁</span>
+              <div><h2>解析について</h2><p>先読み解析は動画の指定間隔ごとにサンプルを取得します。全フレームを調べる処理ではありません。未解析の区間は空白のままです。</p><p>保存されるのは解析結果だけです。元の動画・画像は保存されません。</p></div>
+            </section>
+          </aside>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <span id="storageStatus" class="storage-status"><span class="storage-dot" aria-hidden="true"></span>解析結果はこのブラウザーに保存されます</span>
+        <a href="https://github.com/mishiki/color-timeline" target="_blank" rel="noreferrer">Color Timeline on GitHub <span aria-hidden="true">↗</span></a>
+      </footer>
+    </div>
+  </body>
+</html>
