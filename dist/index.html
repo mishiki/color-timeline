@@ -75,6 +75,19 @@
                 <span class="footnote-icon" aria-hidden="true">i</span>
                 <span>タブ・画面の解析は、再生されている映像だけを記録します。先のフレームを読み進めません。</span>
               </div>
+              <section id="diagnosticsPanel" class="media-diagnostics" aria-label="メディア診断" hidden>
+                <details id="diagnosticsDetails">
+                  <summary id="diagnosticsSummary">メディア診断</summary>
+                  <div class="diagnostics-content">
+                    <p id="diagnosticsIntro"></p>
+                    <div class="diagnostics-actions">
+                      <button id="copyDiagnosticsBtn" class="button button-quiet" type="button">診断情報をコピー</button>
+                      <span id="copyDiagnosticsStatus" role="status" aria-live="polite"></span>
+                    </div>
+                    <pre id="diagnosticsOutput" tabindex="0" aria-label="コピー可能な診断情報"></pre>
+                  </div>
+                </details>
+              </section>
             </section>
 
             <section class="timeline-panel panel" aria-label="色彩のタイムライン">

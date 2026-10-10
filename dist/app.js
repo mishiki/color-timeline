@@ -8,10 +8,42 @@ decoder.preload='auto'; decoder.muted=true; decoder.playsInline=true;
 const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 const worker=new Worker(new URL('./palette-worker.js',import.meta.url),{type:'module'});
 let jobs=new Map(),serial=0,project=null,samples=new Map(),sourceFile=null,sourceHandle=null,sourceUrl=null,stream=null;
-let scanController=null,generation=0,liveBusy=false,callbackId=null,captureStart=null,storageOK=true;
+let scanController=null,generation=0,liveBusy=false,callbackId=null,captureStart=null,storageOK=true,sourceReady=false;
 let selectedTime=0,drawQueued=false,projectSave=Promise.resolve();
+const MAX_DIAGNOSTIC_EVENTS=60;
+let diagnostics={active:false,startedAt:0,file:null,events:[],failure:null,awaited:null};
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error);}
 function fail(error){console.error(error);status(error.message||String(error),true);}
+function shortText(value,max=1000){const text=String(value??'');return text.length>max?text.slice(0,max)+'…':text;}
+function mediaErrorSnapshot(media){const error=media.error;if(!error)return null;const code=error.code??null,codeNames={1:'MEDIA_ERR_ABORTED',2:'MEDIA_ERR_NETWORK',3:'MEDIA_ERR_DECODE',4:'MEDIA_ERR_SRC_NOT_SUPPORTED'};return {code,codeName:codeNames[code]||'',name:shortText(error.name||''),message:shortText(error.message||'')};}
+function finiteValue(value){return Number.isFinite(value)?value:String(value);}
+function mediaSnapshot(media){return {readyState:media.readyState,networkState:media.networkState,error:mediaErrorSnapshot(media),videoWidth:media.videoWidth,videoHeight:media.videoHeight,duration:finiteValue(media.duration),currentTime:finiteValue(media.currentTime)};}
+function diagnosticReport(){return {browser:{userAgent:navigator.userAgent,secureContext:Boolean(window.isSecureContext)},file:diagnostics.file,awaited:diagnostics.awaited,failure:diagnostics.failure,snapshot:{player:mediaSnapshot(player),decoder:mediaSnapshot(decoder)},events:diagnostics.events};}
+function renderDiagnostics(){
+  if(!diagnostics.active)return;
+  $('diagnosticsPanel').hidden=false;$('diagnosticsSummary').textContent=diagnostics.failure?'メディア診断（読み込みに失敗しました）':'メディア診断';
+  $('diagnosticsIntro').textContent=diagnostics.failure?'読み込み失敗時の状態とブラウザーイベントを記録しました。ファイル名や保存場所は含みません。':'ブラウザー内のメディア読み込み状態を記録しています。ファイル名や保存場所は含みません。';
+  $('diagnosticsOutput').textContent=JSON.stringify(diagnosticReport(),null,2);
+}
+function resetDiagnostics(){diagnostics={active:false,startedAt:0,file:null,events:[],failure:null,awaited:null};$('diagnosticsPanel').hidden=true;$('diagnosticsDetails').open=false;$('diagnosticsOutput').textContent='';$('copyDiagnosticsStatus').textContent='';}
+function beginDiagnostics(file){diagnostics={active:true,startedAt:performance.now(),file:{mimeType:file.type||'',sizeBytes:file.size},events:[],failure:null,awaited:null};renderDiagnostics();}
+function recordMediaEvent(element,event){
+  if(!diagnostics.active)return;
+  diagnostics.events.push({elapsedMs:Math.round(performance.now()-diagnostics.startedAt),element,event,readyState:(element==='player'?player:decoder).readyState,networkState:(element==='player'?player:decoder).networkState,error:mediaErrorSnapshot(element==='player'?player:decoder)});
+  if(diagnostics.events.length>MAX_DIAGNOSTIC_EVENTS)diagnostics.events.splice(0,diagnostics.events.length-MAX_DIAGNOSTIC_EVENTS);
+  renderDiagnostics();
+}
+function captureDiagnosticFailure(error,{element='player',stage='media load',awaitedEvent=null}={}){
+  if(!diagnostics.active)return;
+  diagnostics.failure={element,stage:shortText(stage,160),awaitedEvent:awaitedEvent?shortText(awaitedEvent,80):null,message:shortText(error?.message||error,1000),player:mediaSnapshot(player),decoder:mediaSnapshot(decoder)};
+  diagnostics.awaited=null;$('diagnosticsDetails').open=true;renderDiagnostics();
+}
+for(const [media,label] of [[player,'player'],[decoder,'decoder']])for(const name of ['loadstart','loadedmetadata','loadeddata','canplay','canplaythrough','durationchange','error','abort','emptied','stalled','suspend','waiting'])media.addEventListener(name,()=>recordMediaEvent(label,name));
+async function copyDiagnostics(){
+  const output=$('diagnosticsOutput'),selection=window.getSelection(),range=document.createRange();
+  try{await navigator.clipboard.writeText(output.textContent);$('copyDiagnosticsStatus').textContent='診断情報をコピーしました。';}
+  catch{range.selectNodeContents(output);selection.removeAllRanges();selection.addRange(range);output.focus();$('copyDiagnosticsStatus').textContent='テキストを選択しました。Ctrl+C でコピーしてください。';}
+}
 worker.onmessage=({data})=>{const job=jobs.get(data.id);if(!job)return;jobs.delete(data.id);data.error?job.reject(Error(data.error)):job.resolve(data.result);};
 worker.onerror=event=>{for(const job of jobs.values())job.reject(Error(event.message||'解析ワーカーエラー'));jobs.clear();status('解析ワーカーでエラーが発生しました。ページを再読み込みしてください。',true);};
 function settings(){return {...DEFAULT_SETTINGS,hueMerge:+$('hueMerge').value,neutralSat:+$('neutralSat').value,accentSat:+$('accentSat').value,accentMinArea:+$('accentMinArea').value/100,interval:+$('sampleInterval').value,sampleSize:+$('sampleSize').value};}
@@ -29,18 +61,19 @@ async function refreshProjects(){
   for(const p of rows)$('projectSelect').add(new Option(`${p.name} · ${p.sampleCount||0}点`,p.id));
   if(project)$('projectSelect').value=project.id;
 }
-function cancelScan(){scanController?.abort();scanController=null;$('pauseBtn').disabled=true;$('startBtn').disabled=!sourceFile||project?.kind!=='video';}
+function cancelScan(){scanController?.abort();scanController=null;$('pauseBtn').disabled=true;$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video');}
 function detachSource(){
-  cancelScan();generation++;player.pause();
+  sourceReady=false;cancelScan();generation++;player.pause();
   if(callbackId!==null&&player.cancelVideoFrameCallback)player.cancelVideoFrameCallback(callbackId);callbackId=null;
   if(stream){for(const track of stream.getTracks())track.stop();stream=null;}
   player.srcObject=null;player.removeAttribute('src');player.load();decoder.removeAttribute('src');decoder.load();
-  still.removeAttribute('src');if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=null;sourceFile=null;sourceHandle=null;captureStart=null;
+  still.removeAttribute('src');if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=null;sourceFile=null;sourceHandle=null;captureStart=null;resetDiagnostics();
 }
-function waitEvent(element,name,signal,timeout=20000){return new Promise((resolve,reject)=>{
-  const timer=setTimeout(()=>end(Error('映像の読み込みがタイムアウトしました')),timeout);
+function waitEvent(element,name,signal,timeout=20000,stage=name){return new Promise((resolve,reject)=>{
+  const label=element===player?'player':'decoder';if(diagnostics.active){diagnostics.awaited={element:label,event:name,stage};renderDiagnostics();}
+  const timer=setTimeout(()=>{const err=Error('映像の読み込みがタイムアウトしました');captureDiagnosticFailure(err,{element:label,stage,awaitedEvent:name});end(err);},timeout);
   function clean(){clearTimeout(timer);element.removeEventListener(name,ready);element.removeEventListener('error',error);signal?.removeEventListener('abort',abort);}
-  function end(err){clean();err?reject(err):resolve();}function ready(){end();}function error(){end(Error('この動画形式はブラウザーで読み込めません'));}function abort(){end(new DOMException('停止','AbortError'));}
+  function end(err){clean();if(diagnostics.active)diagnostics.awaited=null;renderDiagnostics();err?reject(err):resolve();}function ready(){end();}function error(){const err=Error('映像を取得できません');captureDiagnosticFailure(err,{element:label,stage,awaitedEvent:name});end(err);}function abort(){end(new DOMException('停止','AbortError'));}
   element.addEventListener(name,ready,{once:true});element.addEventListener('error',error,{once:true});signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();
 });}
 async function fingerprint(file){
@@ -51,24 +84,31 @@ async function fingerprint(file){
 }
 async function loadFile(file,handle=null,reconnect=false){
   if(!file)return;
-  const fp=await fingerprint(file);
-  if(reconnect&&project&&project.fingerprint!==fp)throw Error('保存済み解析と元ファイルが一致しません。新しく開く場合は「動画・画像を開く」を使ってください。');
+  const previouslyReady=sourceReady;$('startBtn').disabled=true;
+  let fp;
+  try{fp=await fingerprint(file);if(reconnect&&project&&project.fingerprint!==fp)throw Error('保存済み解析と元ファイルが一致しません。新しく開く場合は「動画・画像を開く」を使ってください。');}
+  catch(error){$('startBtn').disabled=!(previouslyReady&&sourceFile&&project?.kind==='video');throw error;}
   const previous=reconnect?project:null;
-  detachSource();const gen=generation;sourceFile=file;sourceHandle=handle;sourceUrl=URL.createObjectURL(file);player.muted=false;
+  detachSource();const gen=generation;sourceFile=file;sourceHandle=handle;sourceUrl=URL.createObjectURL(file);player.muted=false;$('startBtn').disabled=true;
   const kind=file.type.startsWith('image/')?'image':'video';
+  if(kind==='video')beginDiagnostics(file);
   $('mediaPlaceholder').hidden=true;player.hidden=kind==='image';still.hidden=kind!=='image';
   let duration=0;
   if(kind==='image'){const loaded=waitEvent(still,'load');still.src=sourceUrl;await loaded;}
   else {
-    const loaded=waitEvent(player,'loadeddata');player.src=sourceUrl;await loaded;
-    // Some locally recorded WebM files omit a duration header. Seeking to their
-    // end lets the browser discover the finite duration without copying them.
-    if(!Number.isFinite(player.duration)){
-      const end=waitEvent(player,'seeked');player.currentTime=1e10;await end;
-      const beginning=waitEvent(player,'seeked');player.currentTime=0;await beginning;
-    }
-    if(!Number.isFinite(player.duration)||player.duration<=0)throw Error('長さを取得できない動画です');duration=player.duration;
-    const ready=waitEvent(decoder,'loadeddata');decoder.src=sourceUrl;await ready;
+    try{
+      const loaded=waitEvent(player,'loadeddata',null,20000,'player loadeddata');player.src=sourceUrl;await loaded;
+      if(!player.videoWidth||!player.videoHeight){const error=Error('映像を取得できません');captureDiagnosticFailure(error,{element:'player',stage:'player loadeddata dimension check',awaitedEvent:'loadeddata'});throw error;}
+      // Some locally recorded WebM files omit a duration header. Seeking to their
+      // end lets the browser discover the finite duration without copying them.
+      if(!Number.isFinite(player.duration)){
+        const end=waitEvent(player,'seeked',null,20000,'duration discovery seek to end');player.currentTime=1e10;await end;
+        const beginning=waitEvent(player,'seeked',null,20000,'duration discovery seek to start');player.currentTime=0;await beginning;
+      }
+      if(!Number.isFinite(player.duration)||player.duration<=0){const error=Error('長さを取得できない動画です');captureDiagnosticFailure(error,{element:'player',stage:'duration validation'});throw error;}duration=player.duration;
+      const ready=waitEvent(decoder,'loadeddata',null,20000,'decoder loadeddata');decoder.src=sourceUrl;await ready;
+      if(!decoder.videoWidth||!decoder.videoHeight){const error=Error('映像を取得できません');captureDiagnosticFailure(error,{element:'decoder',stage:'decoder loadeddata dimension check',awaitedEvent:'loadeddata'});throw error;}
+    }catch(error){if(error.name!=='AbortError'&&!diagnostics.failure)captureDiagnosticFailure(error,{element:diagnostics.awaited?.element||'player',stage:diagnostics.awaited?.stage||'opening video',awaitedEvent:diagnostics.awaited?.event||null});throw error;}
   }
   if(gen!==generation)return;
   const s=previous?.settings||settings();
@@ -77,8 +117,8 @@ async function loadFile(file,handle=null,reconnect=false){
   project=existing||{id:crypto.randomUUID(),name:file.name,kind,duration,fingerprint:fp,settings:s,algorithm:VERSION,createdAt:new Date().toISOString()};
   if(handle)project.handle=handle;
   samples=new Map((existing?await getSamples(existing.id):[]).map(x=>[x.timeKey,x]));applyInputs(project.settings);
-  selectedTime=0;$('scrub').disabled=kind==='image';$('scrub').max=duration;$('scrub').value=0;$('startBtn').disabled=kind!=='video';
-  await persistProject();await refreshProjects();render();
+  selectedTime=0;$('scrub').disabled=kind==='image';$('scrub').max=duration;$('scrub').value=0;$('startBtn').disabled=true;
+  await persistProject();await refreshProjects();render();sourceReady=kind==='video';$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video');
   status(existing?'元ファイルを接続しました。保存済みの解析を再利用します。':'元ファイルを開きました。動画本体は保存しません。');
   if(kind==='image')await analyzeSource(still,0,gen);else {scheduleLive();await analyzeSource(player,0,gen);}
 }
@@ -141,7 +181,7 @@ async function seek(t,signal){
   const done=waitEvent(decoder,'seeked',signal);decoder.currentTime=target;await done;
 }
 async function scan(){
-  if(!sourceFile||project?.kind!=='video')return;
+  if(!sourceReady||!sourceFile||project?.kind!=='video')return;
   cancelScan();const control=new AbortController();scanController=control;const gen=generation;
   $('startBtn').disabled=true;$('pauseBtn').disabled=false;status('先読み解析中。再生位置とは独立して、未解析の時刻を埋めています。');
   try{const count=Math.ceil(project.duration/project.settings.interval);
@@ -153,7 +193,7 @@ async function scan(){
     }
     if(gen===generation){await persistProject();await refreshProjects();status(control.signal.aborted?'解析を停止しました。記録済みの時刻は保持しています。':'先読み解析が完了しました。');}
   }catch(e){if(e.name!=='AbortError')fail(e);else status('解析を停止しました。');}
-  finally{if(scanController===control){scanController=null;$('startBtn').disabled=false;$('pauseBtn').disabled=true;}}
+  finally{if(scanController===control){scanController=null;$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video');$('pauseBtn').disabled=true;}}
 }
 async function capture(){
   let chosen=null,managed=false;
@@ -245,6 +285,7 @@ for(const id of ['hueMerge','neutralSat','accentSat','accentMinArea'])$(id).onin
 for(const id of ['hueMerge','neutralSat','accentSat','accentMinArea','sampleInterval','sampleSize'])$(id).addEventListener('change',()=>{if(project)status('設定変更は「設定を適用して別解析」で反映します。');});
 $('applySettingsBtn').onclick=async()=>{if(!sourceFile){status('設定を適用するには元ファイルを開いてください。');return;}try{const file=sourceFile,handle=sourceHandle;await persistProject();await loadFile(file,handle);}catch(e){fail(e);}};
 $('exportJsonBtn').onclick=exportJSON;$('exportCsvBtn').onclick=exportCSV;$('exportPngBtn').onclick=exportPNG;
+$('copyDiagnosticsBtn').onclick=copyDiagnostics;
 $('importJsonBtn').onclick=()=>$('importJsonFile').click();$('importJsonFile').onchange=e=>{const file=e.target.files[0];if(file)importJSON(file).catch(fail).finally(()=>{e.target.value='';});};
 window.addEventListener('resize',render);window.addEventListener('pagehide',()=>{persistProject().catch(()=>{});});
 $('startBtn').disabled=true;syncOutputs();render();
