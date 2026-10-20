@@ -180,6 +180,7 @@ export function putSample(projectId, sample) {
   }
   const palette = copyMetadata(sample.palette);
   const record = { projectId, timeKey: sample.timeKey, t: sample.t, palette };
+  if(sample.hue)record.hue=copyMetadata(sample.hue);
   return runTransaction(SAMPLES_STORE, "readwrite", (transaction) =>
     requestResult(transaction.objectStore(SAMPLES_STORE).put(record)));
 }

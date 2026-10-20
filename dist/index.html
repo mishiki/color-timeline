@@ -179,6 +179,18 @@
               <div id="paletteLegend" class="palette-legend" aria-label="色と構成比の凡例"></div>
             </section>
 
+            <section class="panel hue-panel" aria-label="色相リング">
+              <div class="panel-heading"><h2>色相リング</h2><button id="exportHueBtn" class="button button-quiet" type="button">PNG</button></div>
+              <canvas id="hueRing" width="480" height="480" aria-label="角度が色相、棒の長さが重み付き出現量の色相リング"></canvas>
+              <div class="hue-controls">
+                <label>彩度の重み <output id="hueSaturationOut">1.00</output><input id="hueSaturation" type="range" min="0" max="1" step="0.05" value="1"></label>
+                <label>明度の重み <output id="hueBrightnessOut">1.00</output><input id="hueBrightness" type="range" min="0" max="1" step="0.05" value="1"></label>
+                <label>平滑化の幅 <output id="hueSmoothingOut">6°</output><input id="hueSmoothing" type="range" min="0" max="20" step="1" value="6"></label>
+                <label>目盛り<select id="hueScale"><option value="auto">形を比較（自動拡大）</option><option value="fixed">固定（1度あたり最大5%）</option></select></label>
+              </div>
+              <p id="hueInfo" aria-live="polite"></p>
+              <details><summary>読み方と計算方法</summary><p>上が赤、時計回りに黄・緑・青。角度は色相、棒の長さは加重票。色は色相の目印で、元画像の彩度・明度ではありません。</p><p>重み0は減衰なし、1は彩度S・明度Vをそのまま掛けます。票 = (1−a+aS) × (1−b+bV)。初期値はS×V。黒白灰の完全な無彩色は色相を持たないため別集計。透明度24未満を除いた縮小画像の全画素数で割ります。5色への集約前に計算します。</p><p>平滑化は円周上のガウス平均（幅は標準偏差）。重み・幅の変更は保存済み分布に即時反映し、再解析不要です。自動拡大は各フレームの最大値で伸縮するため、量の比較には固定目盛りを使ってください。</p></details>
+            </section>
             <section class="settings-panel panel">
               <details id="settingsDetails">
                 <summary>

@@ -33,7 +33,15 @@ export function validateImport(data) {
       return {rgb:c.rgb.slice(),hex:'#'+c.rgb.map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase(),share:c.share};
     });
     if(Math.abs(palette.reduce((sum,c)=>sum+c.share,0)-1)>.02)throw Error('色の面積比の合計が不正です');
-    return {timeKey:row.timeKey,t:row.t,palette};
+    let hue;
+    if(row.hue){
+      const h=row.hue;
+      if(!Number.isInteger(h.total)||h.total<0||h.total>1048576||!Number.isInteger(h.achromatic)||h.achromatic<0||h.achromatic>h.total)throw Error('色相分布の画素数が不正です');
+      for(const key of ['count','s','v','sv'])if(!Array.isArray(h[key])||h[key].length!==360||!h[key].every(x=>Number.isFinite(x)&&x>=0&&x<=h.total))throw Error('色相分布が不正です');
+      if(h.count.some((n,i)=>!Number.isInteger(n)||h.s[i]>n+1e-7||h.v[i]>n+1e-7||h.sv[i]>Math.min(h.s[i],h.v[i])+1e-7)||h.count.reduce((a,b)=>a+b,0)+h.achromatic!==h.total)throw Error('色相分布の合計が不正です');
+      hue={total:h.total,achromatic:h.achromatic,count:h.count.slice(),s:h.s.slice(),v:h.v.slice(),sv:h.sv.slice()};
+    }
+    return {timeKey:row.timeKey,t:row.t,palette,...(hue?{hue}:{})};
   });
   return {project:{id:crypto.randomUUID(),name:p.name.slice(0,250),kind:p.kind,duration:p.duration,settings:{...s},fingerprint:typeof p.fingerprint==='string'?p.fingerprint:null,createdAt:new Date().toISOString(),algorithm:p.algorithm||VERSION},samples};
 }

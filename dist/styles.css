@@ -291,3 +291,13 @@ input[type="range"] { accent-color: var(--accent); }
 
 .file-drop-overlay { position: fixed; inset: 12px; z-index: 1000; display: grid; place-items: center; border: 3px dashed #74ddbd; border-radius: 20px; background: #101d30ed; color: #e8fff7; font-size: clamp(20px, 3vw, 36px); font-weight: 700; pointer-events: none; }
 
+
+.hue-panel { padding: 18px; min-width: 0; }
+#hueRing { display: block; width: 100%; max-width: 480px; height: auto; margin: auto; }
+.hue-controls { display: grid; gap: 12px; }
+.hue-controls label { display: block; font-size: 13px; }
+.hue-controls input { display: block; width: 100%; }
+.hue-controls output { float: right; }
+.hue-controls select { width: 100%; }
+.hue-panel p, .hue-panel details { font-size: 12px; line-height: 1.6; color: #a9bdd3; }
+

@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS } from './palette.js';
 import { listProjects, getProject, putProject, putSample, getSamples } from './storage.js';
 import { VERSION, timeKey, formatTime, displayPalette, validateImport } from './model.js';
+import { drawHueRing } from './hue-ring.js';
 
 const $=id=>document.getElementById(id);
 const player=$('player'), still=$('still'), decoder=document.createElement('video');
@@ -142,7 +143,7 @@ async function reconnect(){
 async function analyzeSource(media,t,gen=generation,signal=null){
   if(!project||gen!==generation)return;
   if(project.kind==='video')t=Math.min(t,Math.max(0,project.duration-.001));
-  const key=timeKey(t,project.settings.interval);if(samples.has(key))return;
+  const key=timeKey(t,project.settings.interval);if(samples.get(key)?.hue)return;
   const width=media.videoWidth||media.naturalWidth,height=media.videoHeight||media.naturalHeight;if(!width||!height)return;
   const scale=Math.min(1,project.settings.sampleSize/Math.max(width,height));canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
   ctx.drawImage(media,0,0,canvas.width,canvas.height);const rgba=ctx.getImageData(0,0,canvas.width,canvas.height).data;
@@ -150,7 +151,7 @@ async function analyzeSource(media,t,gen=generation,signal=null){
   const result=await new Promise((resolve,reject)=>{jobs.set(id,{resolve,reject});worker.postMessage({id,rgba:rgba.buffer,width:canvas.width,height:canvas.height,settings:project.settings},[rgba.buffer]);});
   if(gen!==generation||project?.id!==projectId||signal?.aborted)return;
   if(!result.palette.length)return;
-  const sample={timeKey:key,t,palette:result.palette};samples.set(key,sample);
+  const sample={timeKey:key,t,palette:result.palette,hue:result.hue};samples.set(key,sample);
   if(project.kind==='capture')project.duration=Math.max(project.duration,t+project.settings.interval);
   try{await putSample(projectId,sample);if(samples.size%20===0||project.kind==='image')await persistProject();}
   catch(e){storageOK=false;$('storageStatus').textContent='保存失敗。JSONで解析データを保管してください。';status('保存エラー: '+e.message,true);}
@@ -187,7 +188,7 @@ async function scan(){
   try{const count=Math.ceil(project.duration/project.settings.interval);
     for(let i=0;i<count;i++){
       if(control.signal.aborted||gen!==generation)break;
-      const t=i*project.settings.interval;if(samples.has(timeKey(t,project.settings.interval)))continue;
+      const t=i*project.settings.interval;if(samples.get(timeKey(t,project.settings.interval))?.hue)continue;
       await seek(t,control.signal);if(control.signal.aborted||gen!==generation)break;await analyzeSource(decoder,t,gen,control.signal);
       if(i%10===0)await new Promise(resolve=>setTimeout(resolve,0));
     }
@@ -231,6 +232,10 @@ function render(){
     $('currentTime').textContent=formatTime(selectedTime)+'.'+String(Math.floor((selectedTime%1)*1000)).padStart(3,'0');
     $('timelineEmptyHint').hidden=samples.size>0;
     const sample=project?samples.get(timeKey(selectedTime,project.settings.interval)):null;
+    const hs=+$('hueSaturation').value,hv=+$('hueBrightness').value,sigma=+$('hueSmoothing').value;
+    $('hueSaturationOut').textContent=hs.toFixed(2);$('hueBrightnessOut').textContent=hv.toFixed(2);$('hueSmoothingOut').textContent=sigma+'°';
+    const ring=drawHueRing($('hueRing'),sample?.hue,{saturation:hs,brightness:hv,smoothing:sigma,scale:$('hueScale').value});
+    $('hueInfo').textContent=sample?.hue?`加重票の合計 ${(ring.mass*100).toFixed(1)}% · 無彩色 ${(sample.hue.achromatic/Math.max(1,sample.hue.total)*100).toFixed(1)}%`+(ring.clipped?' · 目盛り上限を超える部分があります':'') : sample?'旧データには色相分布がありません。元ファイルを開き、先読み解析すると追加できます。':'この時刻の色相分布は未解析です。';
     $('currentPalette').replaceChildren();$('paletteLegend').replaceChildren();
     if(sample){for(const p of displayPalette(sample.palette,+$('topN').value,$('paletteOrder').value)){
       const bar=document.createElement('span');bar.style.width=(p.width*100)+'%';bar.style.background=p.hex;bar.title=p.hex;$('currentPalette').append(bar);
@@ -298,6 +303,8 @@ for(const id of ['hueMerge','neutralSat','accentSat','accentMinArea','sampleInte
 $('applySettingsBtn').onclick=async()=>{if(!sourceFile){status('設定を適用するには元ファイルを開いてください。');return;}try{const file=sourceFile,handle=sourceHandle;await persistProject();await loadFile(file,handle);}catch(e){fail(e);}};
 $('exportJsonBtn').onclick=exportJSON;$('exportCsvBtn').onclick=exportCSV;$('exportPngBtn').onclick=exportPNG;
 $('copyDiagnosticsBtn').onclick=copyDiagnostics;
+for(const id of ['hueSaturation','hueBrightness','hueSmoothing','hueScale'])$(id).addEventListener('input',render);
+$('exportHueBtn').onclick=()=>$('hueRing').toBlob(blob=>{if(blob)download('hue-ring.png','image/png',blob);},'image/png');
 $('importJsonBtn').onclick=()=>$('importJsonFile').click();$('importJsonFile').onchange=e=>{const file=e.target.files[0];if(file)importJSON(file).catch(fail).finally(()=>{e.target.value='';});};
 window.addEventListener('resize',render);window.addEventListener('pagehide',()=>{persistProject().catch(()=>{});});
 $('startBtn').disabled=true;syncOutputs();render();
