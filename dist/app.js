@@ -277,6 +277,18 @@ window.addEventListener('drop',e=>{
   persistProject().then(()=>loadFile(file)).catch(fail);
 });
 $('fileInput').onchange=e=>loadFile(e.target.files[0],null,e.target.dataset.reconnect==='true').catch(fail).finally(()=>{e.target.value='';});
+window.addEventListener('paste',e=>{
+  // Leave ordinary text editing and non-media clipboard contents untouched.
+  if(e.target instanceof Element && e.target.closest('input,textarea,[contenteditable]:not([contenteditable="false"])'))return;
+  const files=Array.from(e.clipboardData?.items||[])
+    .filter(item=>item.kind==='file' && /^(image|video)\//.test(item.type))
+    .map(item=>item.getAsFile()).filter(Boolean);
+  if(!files.length)return;
+  e.preventDefault();
+  if(files.length!==1){status('画像または動画を1ファイルずつ貼り付けてください。',true);return;}
+  status('クリップボードから読み込んでいます…');
+  persistProject().then(()=>loadFile(files[0])).catch(fail);
+});
 $('projectSelect').onchange=e=>selectProject(e.target.value).catch(fail);$('startBtn').onclick=scan;
 $('pauseBtn').onclick=()=>{if(stream){for(const track of stream.getTracks())track.stop();stream=null;persistProject().then(refreshProjects).catch(fail);$('pauseBtn').disabled=true;status('キャプチャを停止しました。');}else{cancelScan();persistProject().catch(fail);}};
 $('scrub').oninput=e=>seekPlayer(+e.target.value);$('timeline').onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),[start,end]=viewRange();seekPlayer(start+(e.clientX-r.left)/r.width*(end-start));};
