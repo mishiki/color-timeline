@@ -43,5 +43,11 @@ export function validateImport(data) {
     }
     return {timeKey:row.timeKey,t:row.t,palette,...(hue?{hue}:{})};
   });
-  return {project:{id:crypto.randomUUID(),name:p.name.slice(0,250),kind:p.kind,duration:p.duration,settings:{...s},fingerprint:typeof p.fingerprint==='string'?p.fingerprint:null,createdAt:new Date().toISOString(),algorithm:p.algorithm||VERSION},samples};
+  let regions;
+  if(p.regions){
+    const r=p.regions;
+    if(p.kind!=='image'||!Number.isFinite(r.weight)||r.weight<1||r.weight>8||!Array.isArray(r.polygons)||r.polygons.length>100||r.polygons.some(poly=>!Array.isArray(poly)||poly.length<3||poly.length>1000||poly.some(pt=>!Array.isArray(pt)||pt.length!==2||pt.some(n=>!Number.isFinite(n)||n<0||n>1))))throw Error('領域指定が不正です');
+    regions=structuredClone(r);
+  }
+  return {project:{id:crypto.randomUUID(),name:p.name.slice(0,250),kind:p.kind,duration:p.duration,settings:{...s},fingerprint:typeof p.fingerprint==='string'?p.fingerprint:null,createdAt:new Date().toISOString(),algorithm:p.algorithm||VERSION,...(regions?{regions}:{})},samples};
 }

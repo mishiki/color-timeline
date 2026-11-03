@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS } from './palette.js';
 import { listProjects, getProject, putProject, putSample, getSamples } from './storage.js';
 import { VERSION, timeKey, formatTime, displayPalette, validateImport } from './model.js';
 import { drawHueRing } from './hue-ring.js';
+import { editRegions } from './region-editor.js';
 
 const $=id=>document.getElementById(id);
 const player=$('player'), still=$('still'), decoder=document.createElement('video');
@@ -90,6 +91,7 @@ async function loadFile(file,handle=null,reconnect=false){
   try{fp=await fingerprint(file);if(reconnect&&project&&project.fingerprint!==fp)throw Error('保存済み解析と元ファイルが一致しません。新しく開く場合は「動画・画像を開く」を使ってください。');}
   catch(error){$('startBtn').disabled=!(previouslyReady&&sourceFile&&project?.kind==='video');throw error;}
   const previous=reconnect?project:null;
+  const inheritedRegions=project?.fingerprint===fp?project.regions:null;
   detachSource();const gen=generation;sourceFile=file;sourceHandle=handle;sourceUrl=URL.createObjectURL(file);player.muted=false;$('startBtn').disabled=true;
   const kind=file.type.startsWith('image/')?'image':'video';
   if(kind==='video')beginDiagnostics(file);
@@ -117,6 +119,7 @@ async function loadFile(file,handle=null,reconnect=false){
   if(!existing)existing=(await listProjects()).find(p=>p.fingerprint===fp&&p.algorithm===VERSION&&JSON.stringify(p.settings)===JSON.stringify(s));
   project=existing||{id:crypto.randomUUID(),name:file.name,kind,duration,fingerprint:fp,settings:s,algorithm:VERSION,createdAt:new Date().toISOString()};
   if(handle)project.handle=handle;
+  if(kind==='image'&&!existing&&inheritedRegions)project.regions=structuredClone(inheritedRegions);
   samples=new Map((existing?await getSamples(existing.id):[]).map(x=>[x.timeKey,x]));applyInputs(project.settings);
   selectedTime=0;$('scrub').disabled=kind==='image';$('scrub').max=duration;$('scrub').value=0;$('startBtn').disabled=true;
   await persistProject();await refreshProjects();render();sourceReady=kind==='video';$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video');
@@ -148,7 +151,7 @@ async function analyzeSource(media,t,gen=generation,signal=null){
   const scale=Math.min(1,project.settings.sampleSize/Math.max(width,height));canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
   ctx.drawImage(media,0,0,canvas.width,canvas.height);const rgba=ctx.getImageData(0,0,canvas.width,canvas.height).data;
   const id=++serial,projectId=project.id;
-  const result=await new Promise((resolve,reject)=>{jobs.set(id,{resolve,reject});worker.postMessage({id,rgba:rgba.buffer,width:canvas.width,height:canvas.height,settings:project.settings},[rgba.buffer]);});
+  const result=await new Promise((resolve,reject)=>{jobs.set(id,{resolve,reject});worker.postMessage({id,rgba:rgba.buffer,width:canvas.width,height:canvas.height,settings:project.settings,regions:project.kind==='image'?project.regions:null},[rgba.buffer]);});
   if(gen!==generation||project?.id!==projectId||signal?.aborted)return;
   if(!result.palette.length)return;
   const sample={timeKey:key,t,palette:result.palette,hue:result.hue};samples.set(key,sample);
@@ -232,6 +235,8 @@ function render(){
     $('currentTime').textContent=formatTime(selectedTime)+'.'+String(Math.floor((selectedTime%1)*1000)).padStart(3,'0');
     $('timelineEmptyHint').hidden=samples.size>0;
     const sample=project?samples.get(timeKey(selectedTime,project.settings.interval)):null;
+    $('editRegionsBtn').hidden=project?.kind!=='image';$('editRegionsBtn').disabled=!sourceFile||!still.naturalWidth;
+    $('regionNote').textContent=project?.kind==='image'&&project.regions?.polygons.length?`領域強調：${project.regions.polygons.length}領域・内側${project.regions.weight}倍。パレットの比率は加重面積比。`:'';
     const hs=+$('hueSaturation').value,hv=+$('hueBrightness').value,sigma=+$('hueSmoothing').value;
     $('hueSaturationOut').textContent=hs.toFixed(2);$('hueBrightnessOut').textContent=hv.toFixed(2);$('hueSmoothingOut').textContent=sigma+'°';
     const ring=drawHueRing($('hueRing'),sample?.hue,{saturation:hs,brightness:hv,smoothing:sigma,scale:$('hueScale').value});
@@ -303,6 +308,7 @@ for(const id of ['hueMerge','neutralSat','accentSat','accentMinArea','sampleInte
 $('applySettingsBtn').onclick=async()=>{if(!sourceFile){status('設定を適用するには元ファイルを開いてください。');return;}try{const file=sourceFile,handle=sourceHandle;await persistProject();await loadFile(file,handle);}catch(e){fail(e);}};
 $('exportJsonBtn').onclick=exportJSON;$('exportCsvBtn').onclick=exportCSV;$('exportPngBtn').onclick=exportPNG;
 $('copyDiagnosticsBtn').onclick=copyDiagnostics;
+$('editRegionsBtn').onclick=()=>{if(project?.kind!=='image'||!sourceFile)return;const target=project.id;editRegions(still,project.regions,async regions=>{try{if(project?.id!==target)return;const gen=++generation;project.regions=regions;samples.clear();render();await persistProject();await analyzeSource(still,0,gen);if(gen!==generation)return;status('領域の重みを反映しました。表示比率は加重面積比です。');}catch(e){fail(e);}});};
 for(const id of ['hueSaturation','hueBrightness','hueSmoothing','hueScale'])$(id).addEventListener('input',render);
 $('exportHueBtn').onclick=()=>$('hueRing').toBlob(blob=>{if(blob)download('hue-ring.png','image/png',blob);},'image/png');
 $('importJsonBtn').onclick=()=>$('importJsonFile').click();$('importJsonFile').onchange=e=>{const file=e.target.files[0];if(file)importJSON(file).catch(fail).finally(()=>{e.target.value='';});};

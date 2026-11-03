@@ -2,9 +2,9 @@ import { analyzeRGBA } from "./palette.js";
 import { summarizeHue } from "./hue-ring.js";
 
 self.onmessage = (event) => {
-  const { id, rgba, width, height, settings } = event.data ?? {};
+  const { id, rgba, width, height, settings, regions } = event.data ?? {};
   try {
-    const result = analyzeRGBA(rgba, width, height, settings);
+    const result = analyzeRGBA(rgba, width, height, settings, regions);
     result.hue = summarizeHue(rgba);
     self.postMessage({ id, result });
   } catch (error) {

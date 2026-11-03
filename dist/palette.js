@@ -72,7 +72,51 @@ function dist2(a, b) {
   return x * x + y * y + z * z;
 }
 
-function makeSamples(rgba, w, h) {
+export function pointInPolygon(x, y, polygon) {
+  if (!Array.isArray(polygon) || polygon.length < 3) return false;
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [xi, yi] = polygon[i];
+    const [xj, yj] = polygon[j];
+    const cross = (x - xi) * (yj - yi) - (y - yi) * (xj - xi);
+    if (Math.abs(cross) <= 1e-12
+      && x >= Math.min(xi, xj) - 1e-12 && x <= Math.max(xi, xj) + 1e-12
+      && y >= Math.min(yi, yj) - 1e-12 && y <= Math.max(yi, yj) + 1e-12) {
+      return true;
+    }
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function normalizeRegions(regions) {
+  if (regions == null) return { polygons: [], weight: 1 };
+  if (typeof regions !== "object" || Array.isArray(regions)) {
+    throw new TypeError("regions must be an object with polygons and weight");
+  }
+  const weight = regions.weight ?? 1;
+  if (!Number.isFinite(weight) || weight < 1 || weight > 8) {
+    throw new RangeError("regions.weight must be between 1 and 8");
+  }
+  const polygons = regions.polygons ?? [];
+  if (!Array.isArray(polygons)) throw new TypeError("regions.polygons must be an array");
+  for (const polygon of polygons) {
+    if (!Array.isArray(polygon) || polygon.length < 3
+      || polygon.some((point) => !Array.isArray(point) || point.length < 2
+        || !Number.isFinite(point[0]) || !Number.isFinite(point[1]))) {
+      throw new TypeError("each region polygon must contain at least three finite [x, y] points");
+    }
+  }
+  return { polygons, weight };
+}
+
+function regionWeight(x, y, regions) {
+  return regions.polygons.some((polygon) => pointInPolygon(x, y, polygon)) ? regions.weight : 1;
+}
+
+function makeSamples(rgba, w, h, regions) {
   const pixels = [];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -89,6 +133,7 @@ function makeSamples(rgba, w, h) {
         hsv,
         y,
         x,
+        weight: regionWeight((x + 0.5) / w, (y + 0.5) / h, regions),
         tile: Math.floor((y / h) * 8) * 8 + Math.floor((x / w) * 8),
         lum: luminance(r, g, b),
       });
@@ -107,7 +152,7 @@ function circularMeanHue(items) {
   let y = 0;
   for (const p of items) {
     const rad = p.hsv.h * Math.PI / 180;
-    const w = Math.max(0.01, p.hsv.s);
+    const w = p.weight * Math.max(0.01, p.hsv.s);
     x += Math.cos(rad) * w;
     y += Math.sin(rad) * w;
   }
@@ -117,12 +162,18 @@ function circularMeanHue(items) {
 
 function centroidLab(items) {
   const m = [0, 0, 0];
+  let totalWeight = 0;
   for (const p of items) {
-    m[0] += p.lab[0];
-    m[1] += p.lab[1];
-    m[2] += p.lab[2];
+    m[0] += p.lab[0] * p.weight;
+    m[1] += p.lab[1] * p.weight;
+    m[2] += p.lab[2] * p.weight;
+    totalWeight += p.weight;
   }
-  return m.map((v) => v / items.length);
+  return m.map((v) => v / totalWeight);
+}
+
+function totalWeight(items) {
+  return items.reduce((sum, p) => sum + p.weight, 0);
 }
 
 function medoidPixel(items, mean) {
@@ -156,7 +207,7 @@ function familyGroups(pixels, settings) {
     const bins = hueBins.map((b, i) => {
       const items = b.items.filter((p) => (p.hsv.s >= settings.accentSat) === accent);
       return { idx: i, items, hue: items.length ? circularMeanHue(items) : null, accent };
-    }).filter((b) => b.items.length > 0).sort((a, b) => b.items.length - a.items.length);
+    }).filter((b) => b.items.length > 0).sort((a, b) => totalWeight(b.items) - totalWeight(a.items));
     const used = new Set();
     for (const anchor of bins) {
       if (used.has(anchor.idx)) continue;
@@ -178,12 +229,13 @@ function familyGroups(pixels, settings) {
   return out.map((g) => {
     const mean = centroidLab(g.items);
     const rep = medoidPixel(g.items, mean);
-    const sat = g.items.reduce((s, p) => s + p.hsv.s, 0) / g.items.length;
+    const groupWeight = totalWeight(g.items);
+    const sat = g.items.reduce((s, p) => s + p.hsv.s * p.weight, 0) / groupWeight;
     return {
       items: g.items,
       rgb: rep.rgb.slice(),
       lab: rep.lab.slice(),
-      share: g.items.length / pixels.length,
+      share: groupWeight / totalWeight(pixels),
       meanSat: sat,
       accent: g.accent,
       neutral: !!g.neutral,
@@ -238,11 +290,12 @@ function paletteB(pixels, settings, k) {
   }
   if (!chosen.length) return [];
   const labs = chosen.map((g) => g.lab);
-  const counts = new Uint32Array(chosen.length);
+  const counts = new Float64Array(chosen.length);
   const satSum = new Float64Array(chosen.length);
   const lumSum = new Float64Array(chosen.length);
   const tiles = Array.from({ length: chosen.length }, () => new Set());
-  const meanLum = pixels.reduce((s, p) => s + p.lum, 0) / pixels.length;
+  const total = totalWeight(pixels);
+  const meanLum = pixels.reduce((s, p) => s + p.lum * p.weight, 0) / total;
   for (const p of pixels) {
     let best = 0;
     let d = Infinity;
@@ -253,12 +306,11 @@ function paletteB(pixels, settings, k) {
         best = i;
       }
     }
-    counts[best]++;
-    satSum[best] += p.hsv.s;
-    lumSum[best] += p.lum;
+    counts[best] += p.weight;
+    satSum[best] += p.hsv.s * p.weight;
+    lumSum[best] += p.lum * p.weight;
     tiles[best].add(p.tile);
   }
-  const total = pixels.length;
   const result = chosen.map((g, i) => {
     const share = counts[i] / total;
     const meanSat = counts[i] ? satSum[i] / counts[i] : g.meanSat;
@@ -294,8 +346,8 @@ function rgbHex(rgb) {
   return "#" + rgb.map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 
-/** Analyze unweighted full-frame RGBA pixels using the B palette algorithm. */
-export function analyzeRGBA(rgba, w, h, settings = DEFAULT_SETTINGS) {
+/** Analyze full-frame RGBA pixels using the B palette algorithm, optionally weighting polygon regions. */
+export function analyzeRGBA(rgba, w, h, settings = DEFAULT_SETTINGS, regions = undefined) {
   if (!Number.isSafeInteger(w) || w < 0 || !Number.isSafeInteger(h) || h < 0) {
     throw new RangeError("width and height must be non-negative safe integers");
   }
@@ -305,7 +357,8 @@ export function analyzeRGBA(rgba, w, h, settings = DEFAULT_SETTINGS) {
     throw new RangeError("rgba does not contain width * height RGBA pixels");
   }
   const options = { ...DEFAULT_SETTINGS, ...(settings ?? {}) };
-  const pixels = makeSamples(bytes, w, h);
+  const weightedRegions = normalizeRegions(regions);
+  const pixels = makeSamples(bytes, w, h, weightedRegions);
   const palette = paletteB(pixels, options, 5).map(({ rgb, share }) => ({ rgb, hex: rgbHex(rgb), share }));
   return { palette, pixelCount: pixels.length };
 }

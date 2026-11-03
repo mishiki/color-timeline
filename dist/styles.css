@@ -301,3 +301,12 @@ input[type="range"] { accent-color: var(--accent); }
 .hue-controls select { width: 100%; }
 .hue-panel p, .hue-panel details { font-size: 12px; line-height: 1.6; color: #a9bdd3; }
 
+
+.region-dialog { width: min(960px, 94vw); max-height: 92vh; overflow: auto; color: #e8eef6; background: #142031; border: 1px solid #526379; border-radius: 16px; }
+.region-dialog::backdrop { background: #000b; }
+.region-dialog canvas { display: block; max-width: 100%; height: auto; margin: auto; cursor: crosshair; }
+.region-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.region-actions button { padding: 10px; color: #e8eef6; background: #28435a; border: 1px solid #526379; border-radius: 6px; cursor: pointer; }
+.region-dialog input { width: 200px; vertical-align: middle; margin: 12px; }
+.region-message, #regionNote { font-size: 12px; line-height: 1.6; color: #a9bdd3; }
+
