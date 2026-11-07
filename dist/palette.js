@@ -1,12 +1,17 @@
-// Algorithm provenance: the unweighted B family-grouping path from this local
-// project's earlier palette prototype. This module contains no source imagery.
+// ISCC-NBS palette extraction with optional image-polygon weighting.
+// Source imagery is never embedded here; callers provide decoded RGBA pixels.
+
+import { ISCC_DATA, classifyRGB } from "./iscc-data.js";
+import { rgbToMunsell } from "./munsell-data.js";
 
 export const DEFAULT_SETTINGS = Object.freeze({
-  neutralSat: 0.08,
-  accentSat: 0.58,
-  accentMinArea: 0.004,
-  hueMerge: 18,
+  mergeDelta: 0.035,
+  chromaTopPercent: 20,
+  logStrength: 10,
 });
+
+const ALPHA_THRESHOLD = 24;
+const CLASSIFICATION_LEVEL = 13;
 
 function rgbToOklab(r, g, b) {
   r /= 255;
@@ -23,46 +28,6 @@ function rgbToOklab(r, g, b) {
     1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
     0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
   ];
-}
-
-function oklabToRgb(L, a, b) {
-  let l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3);
-  let m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3);
-  let s = Math.pow(L - 0.0894841775 * a - 1.291485548 * b, 3);
-  let r = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
-  let g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
-  let bb = -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s;
-  function gamma(x) {
-    x = Math.max(0, Math.min(1, x));
-    return 255 * Math.round(1e6 * (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055)) / 1e6;
-  }
-  return [gamma(r), gamma(g), gamma(bb)];
-}
-
-function rgbToHsv(r, g, b) {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-  let h = 0;
-  if (d) {
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60;
-    if (h < 0) h += 360;
-  }
-  return { h, s: max === 0 ? 0 : d / max, v: max };
-}
-
-function luminance(r, g, b) {
-  const linear = (x) => {
-    x /= 255;
-    return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
 }
 
 function dist2(a, b) {
@@ -91,7 +56,7 @@ export function pointInPolygon(x, y, polygon) {
   return inside;
 }
 
-function normalizeRegions(regions) {
+export function normalizeRegions(regions) {
   if (regions == null) return { polygons: [], weight: 1 };
   if (typeof regions !== "object" || Array.isArray(regions)) {
     throw new TypeError("regions must be an object with polygons and weight");
@@ -113,221 +78,8 @@ function normalizeRegions(regions) {
 }
 
 function regionWeight(x, y, regions) {
+  // `some` intentionally unions overlapping polygons instead of multiplying them.
   return regions.polygons.some((polygon) => pointInPolygon(x, y, polygon)) ? regions.weight : 1;
-}
-
-function makeSamples(rgba, w, h, regions) {
-  const pixels = [];
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      const r = rgba[i];
-      const g = rgba[i + 1];
-      const b = rgba[i + 2];
-      const a = rgba[i + 3];
-      if (a < 24) continue;
-      const hsv = rgbToHsv(r, g, b);
-      pixels.push({
-        rgb: [r, g, b],
-        lab: rgbToOklab(r, g, b),
-        hsv,
-        y,
-        x,
-        weight: regionWeight((x + 0.5) / w, (y + 0.5) / h, regions),
-        tile: Math.floor((y / h) * 8) * 8 + Math.floor((x / w) * 8),
-        lum: luminance(r, g, b),
-      });
-    }
-  }
-  return pixels;
-}
-
-function hueDistance(a, b) {
-  const d = Math.abs(a - b) % 360;
-  return Math.min(d, 360 - d);
-}
-
-function circularMeanHue(items) {
-  let x = 0;
-  let y = 0;
-  for (const p of items) {
-    const rad = p.hsv.h * Math.PI / 180;
-    const w = p.weight * Math.max(0.01, p.hsv.s);
-    x += Math.cos(rad) * w;
-    y += Math.sin(rad) * w;
-  }
-  const d = Math.atan2(y, x) * 180 / Math.PI;
-  return (d + 360) % 360;
-}
-
-function centroidLab(items) {
-  const m = [0, 0, 0];
-  let totalWeight = 0;
-  for (const p of items) {
-    m[0] += p.lab[0] * p.weight;
-    m[1] += p.lab[1] * p.weight;
-    m[2] += p.lab[2] * p.weight;
-    totalWeight += p.weight;
-  }
-  return m.map((v) => v / totalWeight);
-}
-
-function totalWeight(items) {
-  return items.reduce((sum, p) => sum + p.weight, 0);
-}
-
-function medoidPixel(items, mean) {
-  let pick = items[0];
-  let best = Infinity;
-  for (const p of items) {
-    const d = dist2(p.lab, mean);
-    if (d < best) {
-      best = d;
-      pick = p;
-    }
-  }
-  return pick;
-}
-
-function familyGroups(pixels, settings) {
-  const neutralSat = settings.neutralSat ?? 0.08;
-  const hueBins = Array.from({ length: 12 }, () => ({ items: [], hue: null, accent: false }));
-  const neutral = [{ items: [], neutral: true }, { items: [], neutral: true }, { items: [], neutral: true }];
-  for (const p of pixels) {
-    if (p.hsv.s < neutralSat || p.hsv.s === 0) {
-      const band = p.lab[0] < 0.34 ? 0 : p.lab[0] < 0.73 ? 1 : 2;
-      neutral[band].items.push(p);
-    } else {
-      const idx = Math.floor(((p.hsv.h + 15) % 360) / 30) % 12;
-      hueBins[idx].items.push(p);
-    }
-  }
-  const out = [];
-  for (const accent of [false, true]) {
-    const bins = hueBins.map((b, i) => {
-      const items = b.items.filter((p) => (p.hsv.s >= settings.accentSat) === accent);
-      return { idx: i, items, hue: items.length ? circularMeanHue(items) : null, accent };
-    }).filter((b) => b.items.length > 0).sort((a, b) => totalWeight(b.items) - totalWeight(a.items));
-    const used = new Set();
-    for (const anchor of bins) {
-      if (used.has(anchor.idx)) continue;
-      used.add(anchor.idx);
-      const items = anchor.items.slice();
-      for (const candidate of bins) {
-        if (used.has(candidate.idx)) continue;
-        if (hueDistance(anchor.hue, candidate.hue) <= settings.hueMerge) {
-          used.add(candidate.idx);
-          items.push(...candidate.items);
-        }
-      }
-      out.push({ items, accent, hue: circularMeanHue(items) });
-    }
-  }
-  for (let i = 0; i < neutral.length; i++) {
-    if (neutral[i].items.length) out.push({ items: neutral[i].items, accent: false, neutral: true, band: i });
-  }
-  return out.map((g) => {
-    const mean = centroidLab(g.items);
-    const rep = medoidPixel(g.items, mean);
-    const groupWeight = totalWeight(g.items);
-    const sat = g.items.reduce((s, p) => s + p.hsv.s * p.weight, 0) / groupWeight;
-    return {
-      items: g.items,
-      rgb: rep.rgb.slice(),
-      lab: rep.lab.slice(),
-      share: groupWeight / totalWeight(pixels),
-      meanSat: sat,
-      accent: g.accent,
-      neutral: !!g.neutral,
-      hue: g.hue,
-    };
-  });
-}
-
-function farthestPixel(pixels, chosen) {
-  const used = new Set(chosen.map((c) => c.rgb.join(",")));
-  let best = null;
-  let bestD = -1;
-  for (const p of pixels) {
-    if (used.has(p.rgb.join(","))) continue;
-    let d = Infinity;
-    for (const c of chosen) d = Math.min(d, dist2(p.lab, c.lab));
-    if (d > bestD) {
-      bestD = d;
-      best = p;
-    }
-  }
-  return best;
-}
-
-function paletteB(pixels, settings, k) {
-  if (!pixels.length) return [];
-  const groups = familyGroups(pixels, settings);
-  const accentMin = settings.accentMinArea;
-  const eligible = groups.filter((g) => g.share >= accentMin && g.accent && g.meanSat >= settings.accentSat);
-  const protectedGroups = eligible.slice()
-    .sort((a, b) => (b.share * (1 + 2.2 * b.meanSat)) - (a.share * (1 + 2.2 * a.meanSat)))
-    .slice(0, Math.min(2, k));
-  const chosen = [];
-  for (const g of protectedGroups) if (chosen.length < k) chosen.push(g);
-  const ranked = groups.slice().sort((a, b) =>
-    (b.share * (1 + (b.accent ? 1.3 * b.meanSat : 0))) - (a.share * (1 + (a.accent ? 1.3 * a.meanSat : 0))));
-  for (const g of ranked) {
-    if (chosen.length >= k) break;
-    if (!chosen.includes(g)) chosen.push(g);
-  }
-  while (chosen.length < k) {
-    const far = farthestPixel(pixels, chosen);
-    if (!far) break;
-    chosen.push({
-      rgb: far.rgb.slice(),
-      lab: far.lab.slice(),
-      share: 0,
-      meanSat: far.hsv.s,
-      accent: far.hsv.s >= settings.accentSat,
-      items: [far],
-    });
-  }
-  if (!chosen.length) return [];
-  const labs = chosen.map((g) => g.lab);
-  const counts = new Float64Array(chosen.length);
-  const satSum = new Float64Array(chosen.length);
-  const lumSum = new Float64Array(chosen.length);
-  const tiles = Array.from({ length: chosen.length }, () => new Set());
-  const total = totalWeight(pixels);
-  const meanLum = pixels.reduce((s, p) => s + p.lum * p.weight, 0) / total;
-  for (const p of pixels) {
-    let best = 0;
-    let d = Infinity;
-    for (let i = 0; i < labs.length; i++) {
-      const q = dist2(p.lab, labs[i]);
-      if (q < d) {
-        d = q;
-        best = i;
-      }
-    }
-    counts[best] += p.weight;
-    satSum[best] += p.hsv.s * p.weight;
-    lumSum[best] += p.lum * p.weight;
-    tiles[best].add(p.tile);
-  }
-  const result = chosen.map((g, i) => {
-    const share = counts[i] / total;
-    const meanSat = counts[i] ? satSum[i] / counts[i] : g.meanSat;
-    const meanL = counts[i] ? lumSum[i] / counts[i] : meanLum;
-    return {
-      rgb: g.rgb.slice(),
-      share,
-      metrics: {
-        area: share,
-        sat: meanSat,
-        contrast: Math.min(1, Math.abs(meanL - meanLum) * 1.8),
-        repeat: tiles[i].size / 64,
-      },
-      accent: !!g.accent,
-    };
-  }).filter((x) => x.share > 0);
-  return result.sort((a, b) => b.share - a.share);
 }
 
 function toRGBABytes(rgba) {
@@ -342,23 +94,310 @@ function toRGBABytes(rgba) {
   throw new TypeError("rgba must be an ArrayBuffer or byte-oriented array");
 }
 
-function rgbHex(rgb) {
-  return "#" + rgb.map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("").toUpperCase();
+function makeSamples(rgba, width, height, regions) {
+  const pixels = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const alpha = rgba[i + 3];
+      if (alpha < ALPHA_THRESHOLD) continue;
+      const rgb = [rgba[i], rgba[i + 1], rgba[i + 2]];
+      pixels.push({
+        rgb,
+        lab: rgbToOklab(...rgb),
+        weight: regionWeight((x + 0.5) / width, (y + 0.5) / height, regions),
+      });
+    }
+  }
+  return pixels;
 }
 
-/** Analyze full-frame RGBA pixels using the B palette algorithm, optionally weighting polygon regions. */
-export function analyzeRGBA(rgba, w, h, settings = DEFAULT_SETTINGS, regions = undefined) {
-  if (!Number.isSafeInteger(w) || w < 0 || !Number.isSafeInteger(h) || h < 0) {
+function weightedMass(items) {
+  return items.reduce((sum, pixel) => sum + pixel.weight, 0);
+}
+
+function chromaRepresentative(items, topPercent = 20) {
+  if (!items.length) return null;
+  const positive = items.filter((pixel) => pixel.weight > 0);
+  const active = positive.length ? positive : items;
+  const parsedPercent = Number(topPercent);
+  const percent = Math.max(1, Math.min(100, Number.isFinite(parsedPercent) ? parsedPercent : 20));
+  let candidates = active;
+  if (percent < 100) {
+    const chromas = active.map((pixel) => Math.hypot(pixel.lab[1], pixel.lab[2])).sort((a, b) => b - a);
+    const cutoff = chromas[Math.max(0, Math.ceil(active.length * percent / 100) - 1)];
+    // The cutoff is by pixel count, and ties stay in the candidate set.
+    candidates = active.filter((pixel) => Math.hypot(pixel.lab[1], pixel.lab[2]) >= cutoff);
+  }
+  const weighted = positive.length > 0;
+  const mass = weighted ? weightedMass(candidates) : candidates.length;
+  const mean = [0, 0, 0];
+  for (const pixel of candidates) {
+    const weight = weighted ? pixel.weight : 1;
+    for (let i = 0; i < 3; i++) mean[i] += pixel.lab[i] * weight;
+  }
+  for (let i = 0; i < 3; i++) mean[i] /= mass;
+  let bestDistance = Infinity;
+  let representative = candidates[0];
+  for (const pixel of candidates) {
+    const distance = dist2(pixel.lab, mean);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      representative = pixel;
+    }
+  }
+  return representative;
+}
+
+function makeCategoryMap() {
+  const out = new Map();
+  for (const category of ISCC_DATA.categories || []) {
+    const groupId = category.level1Id ?? category.id;
+    const groupName = category.level1Name ?? category.name;
+    if (category.id !== undefined && category.id !== null
+      && groupId !== undefined && groupId !== null && groupName !== undefined && groupName !== null) {
+      out.set(String(category.id), { id: groupId, name: groupName });
+    }
+  }
+  return out;
+}
+
+function categoryFor(classification, categoryMap) {
+  const id = classification?.id;
+  if (id === undefined || id === null || Number(id) === 0) return null;
+  return categoryMap.get(String(id)) || null;
+}
+
+function categoryCount() {
+  const ids = new Set();
+  for (const category of ISCC_DATA.categories || []) {
+    const id = category.level1Id ?? category.id;
+    if (id !== undefined && id !== null) ids.add(String(id));
+  }
+  return ids.size;
+}
+
+function rgbHex(rgb) {
+  return "#" + rgb.map((value) => Math.max(0, Math.min(255, Math.round(value)))
+    .toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
+function memberSummary(item) {
+  return {
+    id: item.categoryId,
+    name: item.categoryName,
+    rgb: item.rgb.slice(),
+    share: item.share,
+    rawShare: item.rawShare,
+  };
+}
+
+function mergeIsccPalette(base, groups, threshold, chromaTopPercent = 20) {
+  if (!(threshold > 0)) return base;
+  const labs = base.map((item) => rgbToOklab(...item.rgb));
+  const clusters = base.map((_, index) => [index]);
+  const distance = (a, b) => Math.sqrt(dist2(labs[a], labs[b]));
+  while (true) {
+    let best = Infinity;
+    let pair = null;
+    for (let i = 0; i < clusters.length; i++) {
+      for (let j = i + 1; j < clusters.length; j++) {
+        if (!clusters[i].some((index) => base[index].weightedMass > 0)
+          || !clusters[j].some((index) => base[index].weightedMass > 0)) continue;
+        let diameter = 0;
+        for (const a of clusters[i]) {
+          for (const b of clusters[j]) diameter = Math.max(diameter, distance(a, b));
+        }
+        if (diameter <= threshold && diameter < best) {
+          best = diameter;
+          pair = [i, j];
+        }
+      }
+    }
+    if (!pair) break;
+    const [i, j] = pair;
+    clusters[i] = clusters[i].concat(clusters[j]);
+    clusters.splice(j, 1);
+  }
+
+  return clusters.map((indices) => {
+    if (indices.length === 1) return base[indices[0]];
+    const members = indices.map((index) => base[index])
+      .sort((a, b) => Number(a.categoryId) - Number(b.categoryId));
+    const pixels = members.flatMap((member) => groups.get(String(member.categoryId)).pixels);
+    const representative = chromaRepresentative(pixels, chromaTopPercent);
+    const share = members.reduce((sum, member) => sum + member.share, 0);
+    const rawShare = members.reduce((sum, member) => sum + member.rawShare, 0);
+    const pixelCount = members.reduce((sum, member) => sum + member.pixelCount, 0);
+    const mass = members.reduce((sum, member) => sum + member.weightedMass, 0);
+    const traces = members.map(memberSummary);
+    return {
+      categoryId: members.map((member) => member.categoryId).join("+"),
+      categoryName: members.map((member) => member.categoryName).join(" + "),
+      classificationLevel: CLASSIFICATION_LEVEL,
+      rgb: representative.rgb.slice(),
+      hex: rgbHex(representative.rgb),
+      munsell: rgbToMunsell(representative.rgb),
+      share,
+      rawShare,
+      pixelCount,
+      weightedMass: mass,
+      members: traces,
+      metrics: { area: share, rawArea: rawShare, pixelCount, weightedMass: mass, members: traces },
+    };
+  }).sort((a, b) => b.share - a.share || String(a.categoryId).localeCompare(String(b.categoryId)));
+}
+
+function makeUnknown(pixels, totalRaw, totalMass, topPercent) {
+  const pixelCount = pixels.length;
+  if (pixelCount === 0) {
+    return {
+      categoryId: 0,
+      categoryName: "Unknown / 未分類",
+      pixelCount: 0,
+      weightedMass: 0,
+      share: 0,
+      rawShare: 0,
+    };
+  }
+  const mass = weightedMass(pixels);
+  const representative = chromaRepresentative(pixels, topPercent);
+  return {
+    categoryId: 0,
+    categoryName: "Unknown / 未分類",
+    classificationLevel: CLASSIFICATION_LEVEL,
+    rgb: representative.rgb.slice(),
+    hex: rgbHex(representative.rgb),
+    munsell: rgbToMunsell(representative.rgb),
+    share: mass / totalMass,
+    rawShare: pixelCount / totalRaw,
+    pixelCount,
+    weightedMass: mass,
+    isUnknown: true,
+    members: [],
+    metrics: {
+      area: mass / totalMass,
+      rawArea: pixelCount / totalRaw,
+      pixelCount,
+      weightedMass: mass,
+      members: [],
+    },
+  };
+}
+
+/** Analyze visible RGBA pixels into all ISCC-NBS level-13 groups. */
+export function analyzeRGBA(rgba, width, height, settings = DEFAULT_SETTINGS, regions = undefined) {
+  if (!Number.isSafeInteger(width) || width < 0 || !Number.isSafeInteger(height) || height < 0) {
     throw new RangeError("width and height must be non-negative safe integers");
   }
   const bytes = toRGBABytes(rgba);
-  const requiredLength = w * h * 4;
+  const requiredLength = width * height * 4;
   if (!Number.isSafeInteger(requiredLength) || bytes.length < requiredLength) {
     throw new RangeError("rgba does not contain width * height RGBA pixels");
   }
   const options = { ...DEFAULT_SETTINGS, ...(settings ?? {}) };
+  const mergeDeltaValue = Number(options.mergeDelta);
+  const mergeDelta = Math.max(0, Math.min(0.15, Number.isFinite(mergeDeltaValue) ? mergeDeltaValue : 0.035));
+  const chromaValue = Number(options.chromaTopPercent);
+  const chromaTopPercent = Math.max(1, Math.min(100, Number.isFinite(chromaValue) ? chromaValue : 20));
   const weightedRegions = normalizeRegions(regions);
-  const pixels = makeSamples(bytes, w, h, weightedRegions);
-  const palette = paletteB(pixels, options, 5).map(({ rgb, share }) => ({ rgb, hex: rgbHex(rgb), share }));
-  return { palette, pixelCount: pixels.length };
+  const pixels = makeSamples(bytes, width, height, weightedRegions);
+  const groups = new Map();
+  const categoriesByLeaf = makeCategoryMap();
+  const unknownPixels = [];
+  const totalRaw = pixels.length;
+  let lowValueFallbackCount = 0;
+
+  for (const pixel of pixels) {
+    const classification = classifyRGB(pixel.rgb);
+    if (classification?.lowValueFallback) lowValueFallbackCount++;
+    const category = categoryFor(classification, categoriesByLeaf);
+    if (!category) {
+      unknownPixels.push(pixel);
+      continue;
+    }
+    const key = String(category.id);
+    let group = groups.get(key);
+    if (!group) {
+      group = { categoryId: category.id, categoryName: category.name, pixels: [] };
+      groups.set(key, group);
+    }
+    group.pixels.push(pixel);
+  }
+
+  const totalMass = weightedMass(pixels) || 1;
+  const palette = [];
+  for (const group of groups.values()) {
+    const weighted = weightedMass(group.pixels);
+    const representative = chromaRepresentative(group.pixels, chromaTopPercent);
+    const share = weighted / totalMass;
+    const rawShare = group.pixels.length / (totalRaw || 1);
+    const item = {
+      categoryId: group.categoryId,
+      categoryName: group.categoryName,
+      classificationLevel: CLASSIFICATION_LEVEL,
+      rgb: representative.rgb.slice(),
+      hex: rgbHex(representative.rgb),
+      munsell: rgbToMunsell(representative.rgb),
+      share,
+      rawShare,
+      pixelCount: group.pixels.length,
+      weightedMass: weighted,
+    };
+    item.members = [memberSummary(item)];
+    item.metrics = {
+      area: share,
+      rawArea: rawShare,
+      pixelCount: group.pixels.length,
+      weightedMass: weighted,
+      members: item.members,
+    };
+    palette.push(item);
+  }
+  palette.sort((a, b) => b.share - a.share || Number(a.categoryId) - Number(b.categoryId));
+  const merged = mergeIsccPalette(palette, groups, mergeDelta, chromaTopPercent);
+  const unknown = makeUnknown(unknownPixels, totalRaw || 1, totalMass, chromaTopPercent);
+  if (unknownPixels.length) merged.push(unknown);
+  merged.sort((a, b) => b.share - a.share || String(a.categoryId).localeCompare(String(b.categoryId)));
+
+  const unknownRawShare = unknownPixelRawShare(unknown, totalRaw);
+  const unknownShare = unknown.share;
+  const regionApplied = weightedRegions.polygons.length > 0;
+  const bSettings = {
+    algorithm: "ISCC-NBS",
+    algorithmVersion: "iscc-nbs-13-chroma-v3",
+    classificationLevel: CLASSIFICATION_LEVEL,
+    mergeDelta,
+    chromaTopPercent,
+    representativeMethod: "chroma-top-pixel-fraction-weighted-mean-nearest",
+    mergeMethod: "complete-link-original-representatives",
+    categoryCount: categoryCount(),
+  };
+  return {
+    palette: merged,
+    pixelCount: totalRaw,
+    visibleRatio: width * height ? totalRaw / (width * height) : 0,
+    sampleSize: [width, height],
+    alphaThreshold: ALPHA_THRESHOLD,
+    algorithmVersion: bSettings.algorithmVersion,
+    bSettings,
+    classificationLevel: CLASSIFICATION_LEVEL,
+    categoryCount: bSettings.categoryCount,
+    totalWeightedMass: totalMass === 1 && totalRaw === 0 ? 0 : weightedMass(pixels),
+    unknown,
+    unknownPixelCount: unknown.pixelCount,
+    unknownShare,
+    unknownRawShare,
+    lowValueFallbackCount,
+    regionSettings: { weight: weightedRegions.weight, applied: regionApplied },
+    regionsUsed: {
+      active: weightedRegions.polygons.length > 0,
+      polygons: weightedRegions.polygons,
+      weight: weightedRegions.weight,
+    },
+  };
+}
+
+function unknownPixelRawShare(unknown, totalRaw) {
+  return totalRaw ? unknown.pixelCount / totalRaw : 0;
 }

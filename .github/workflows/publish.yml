@@ -46,7 +46,7 @@ jobs:
       - name: Package local app
         run: |
           mkdir color-timeline
-          cp -r dist server.mjs package.json README.md start.cmd start.sh color-timeline/
+          cp -r dist tools server.mjs package.json README.md start.cmd start.sh color-timeline/
           chmod +x color-timeline/start.sh
           zip -r color-timeline.zip color-timeline
           sha256sum color-timeline.zip > color-timeline.zip.sha256

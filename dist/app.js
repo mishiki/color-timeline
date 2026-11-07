@@ -3,6 +3,8 @@ import { listProjects, getProject, putProject, putSample, getSamples } from './s
 import { VERSION, timeKey, formatTime, displayPalette, validateImport } from './model.js';
 import { drawHueRing } from './hue-ring.js';
 import { editRegions } from './region-editor.js';
+import { createMunsellView } from './munsell-view.js';
+import { rgbToMunsell } from './munsell-data.js';
 
 const $=id=>document.getElementById(id);
 const player=$('player'), still=$('still'), decoder=document.createElement('video');
@@ -12,10 +14,19 @@ const worker=new Worker(new URL('./palette-worker.js',import.meta.url),{type:'mo
 let jobs=new Map(),serial=0,project=null,samples=new Map(),sourceFile=null,sourceHandle=null,sourceUrl=null,stream=null;
 let scanController=null,generation=0,liveBusy=false,callbackId=null,captureStart=null,storageOK=true,sourceReady=false;
 let selectedTime=0,drawQueued=false,projectSave=Promise.resolve();
+let legacyNoticeProjectId=null,munsellViewKey=null,munsellSampleRef=null;
 const MAX_DIAGNOSTIC_EVENTS=60;
 let diagnostics={active:false,startedAt:0,file:null,events:[],failure:null,awaited:null};
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error);}
 function fail(error){console.error(error);status(error.message||String(error),true);}
+function currentAlgorithm(){return Boolean(project&&project.algorithm===VERSION);}
+function notifyLegacyProject(){if(!project||currentAlgorithm())return;if(legacyNoticeProjectId!==project.id){status('この保存済み解析は旧方式です。新方式で解析するには「設定を適用して別解析」を選んでください。');legacyNoticeProjectId=project.id;}}
+function rgbForPalette(p){if(Array.isArray(p?.rgb)&&p.rgb.length===3)return p.rgb;if(/^#[\da-f]{6}$/i.test(p?.hex||''))return [1,3,5].map(i=>parseInt(p.hex.slice(i,i+2),16));return null;}
+function munsellForPalette(p){if(p?.isOther)return null;const direct=p?.munsell;if(direct&&Number.isFinite(direct.h)&&Number.isFinite(direct.v)&&Number.isFinite(direct.c))return direct;if(currentAlgorithm())return null;const rgb=rgbForPalette(p);return rgb?rgbToMunsell(rgb):null;}
+function paletteLabel(p,index=0){return p?.categoryName||`色 ${index+1}`;}
+function displayForSample(sample,count=+$('topN').value,order=$('paletteOrder').value){return project&&sample?displayPalette(sample.palette,count,order,project.settings?.logStrength??0):[];}
+function showMunsellSelection(color){if(!color){$('munsellSelection').textContent='色の点を選ぶとHEXとHVCを表示します。';return;}const m=color.munsell||munsellForPalette(color);const hvc=m&&[m.h,m.v,m.c].every(Number.isFinite)?`H ${m.h.toFixed(1)} · V ${m.v.toFixed(1)} · C ${m.c.toFixed(1)}`:'HVC 推定なし';$('munsellSelection').textContent=`${color.hex||'色'} · ${hvc}${m?.approximate?'（近似）':''}`;}
+const munsellView=createMunsellView($('munsellCanvas'),{onSelect:showMunsellSelection});
 function shortText(value,max=1000){const text=String(value??'');return text.length>max?text.slice(0,max)+'…':text;}
 function mediaErrorSnapshot(media){const error=media.error;if(!error)return null;const code=error.code??null,codeNames={1:'MEDIA_ERR_ABORTED',2:'MEDIA_ERR_NETWORK',3:'MEDIA_ERR_DECODE',4:'MEDIA_ERR_SRC_NOT_SUPPORTED'};return {code,codeName:codeNames[code]||'',name:shortText(error.name||''),message:shortText(error.message||'')};}
 function finiteValue(value){return Number.isFinite(value)?value:String(value);}
@@ -48,9 +59,9 @@ async function copyDiagnostics(){
 }
 worker.onmessage=({data})=>{const job=jobs.get(data.id);if(!job)return;jobs.delete(data.id);data.error?job.reject(Error(data.error)):job.resolve(data.result);};
 worker.onerror=event=>{for(const job of jobs.values())job.reject(Error(event.message||'解析ワーカーエラー'));jobs.clear();status('解析ワーカーでエラーが発生しました。ページを再読み込みしてください。',true);};
-function settings(){return {...DEFAULT_SETTINGS,hueMerge:+$('hueMerge').value,neutralSat:+$('neutralSat').value,accentSat:+$('accentSat').value,accentMinArea:+$('accentMinArea').value/100,interval:+$('sampleInterval').value,sampleSize:+$('sampleSize').value};}
-function applyInputs(s){for(const key of ['hueMerge','neutralSat','accentSat','sampleSize'])$(key).value=s[key];$('accentMinArea').value=s.accentMinArea*100;$('sampleInterval').value=s.interval;syncOutputs();}
-function syncOutputs(){for(const key of ['hueMerge','neutralSat','accentSat','accentMinArea'])$(key+'Out').textContent=$(key).value+(key==='hueMerge'?'°':key==='accentMinArea'?'%':'');}
+function settings(){return {...DEFAULT_SETTINGS,mergeDelta:+$('mergeDelta').value,chromaTopPercent:+$('chromaTopPercent').value,logStrength:+$('logStrength').value,interval:+$('sampleInterval').value,sampleSize:+$('sampleSize').value};}
+function applyInputs(s){for(const key of ['mergeDelta','chromaTopPercent','logStrength'])$(key).value=Number.isFinite(s?.[key])?s[key]:DEFAULT_SETTINGS[key];$('sampleSize').value=s?.sampleSize??192;$('sampleInterval').value=s?.interval??1;syncOutputs();}
+function syncOutputs(){$('mergeDeltaOut').textContent=(+$('mergeDelta').value).toFixed(3);$('chromaTopPercentOut').textContent=$('chromaTopPercent').value+'%';$('logStrengthOut').textContent=$('logStrength').value;}
 async function persistProject(){
   if(!project)return;
   const snapshot={...project,updatedAt:new Date().toISOString(),sampleCount:samples.size};
@@ -63,7 +74,7 @@ async function refreshProjects(){
   for(const p of rows)$('projectSelect').add(new Option(`${p.name} · ${p.sampleCount||0}点`,p.id));
   if(project)$('projectSelect').value=project.id;
 }
-function cancelScan(){scanController?.abort();scanController=null;$('pauseBtn').disabled=true;$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video');}
+function cancelScan(){scanController?.abort();scanController=null;$('pauseBtn').disabled=true;$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video'&&currentAlgorithm());}
 function detachSource(){
   sourceReady=false;cancelScan();generation++;player.pause();
   if(callbackId!==null&&player.cancelVideoFrameCallback)player.cancelVideoFrameCallback(callbackId);callbackId=null;
@@ -89,7 +100,7 @@ async function loadFile(file,handle=null,reconnect=false){
   const previouslyReady=sourceReady;$('startBtn').disabled=true;
   let fp;
   try{fp=await fingerprint(file);if(reconnect&&project&&project.fingerprint!==fp)throw Error('保存済み解析と元ファイルが一致しません。新しく開く場合は「動画・画像を開く」を使ってください。');}
-  catch(error){$('startBtn').disabled=!(previouslyReady&&sourceFile&&project?.kind==='video');throw error;}
+  catch(error){$('startBtn').disabled=!(previouslyReady&&sourceFile&&project?.kind==='video'&&currentAlgorithm());throw error;}
   const previous=reconnect?project:null;
   const inheritedRegions=project?.fingerprint===fp?project.regions:null;
   detachSource();const gen=generation;sourceFile=file;sourceHandle=handle;sourceUrl=URL.createObjectURL(file);player.muted=false;$('startBtn').disabled=true;
@@ -120,10 +131,10 @@ async function loadFile(file,handle=null,reconnect=false){
   project=existing||{id:crypto.randomUUID(),name:file.name,kind,duration,fingerprint:fp,settings:s,algorithm:VERSION,createdAt:new Date().toISOString()};
   if(handle)project.handle=handle;
   if(kind==='image'&&!existing&&inheritedRegions)project.regions=structuredClone(inheritedRegions);
-  samples=new Map((existing?await getSamples(existing.id):[]).map(x=>[x.timeKey,x]));applyInputs(project.settings);
+  samples=new Map((existing?await getSamples(existing.id):[]).map(x=>[x.timeKey,x]));applyInputs(project.settings);legacyNoticeProjectId=null;
   selectedTime=0;$('scrub').disabled=kind==='image';$('scrub').max=duration;$('scrub').value=0;$('startBtn').disabled=true;
-  await persistProject();await refreshProjects();render();sourceReady=kind==='video';$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video');
-  status(existing?'元ファイルを接続しました。保存済みの解析を再利用します。':'元ファイルを開きました。動画本体は保存しません。');
+  await persistProject();await refreshProjects();render();sourceReady=kind==='video';$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video'&&currentAlgorithm());
+  status(existing?'元ファイルを接続しました。保存済みの解析を再利用します。':'元ファイルを開きました。動画本体は保存しません。');if(!currentAlgorithm())notifyLegacyProject();
   if(kind==='image')await analyzeSource(still,0,gen);else {scheduleLive();await analyzeSource(player,0,gen);}
 }
 async function chooseFile(reconnect=false){
@@ -134,7 +145,7 @@ async function chooseFile(reconnect=false){
 }
 async function selectProject(id){
   if(!id)return;await persistProject();detachSource();project=await getProject(id);samples=new Map((await getSamples(id)).map(s=>[s.timeKey,s]));
-  applyInputs(project.settings);selectedTime=0;player.hidden=true;still.hidden=true;$('mediaPlaceholder').hidden=false;$('mediaPlaceholder').textContent='解析結果を表示中。映像を見るには元ファイルを再接続してください。';
+  applyInputs(project.settings);legacyNoticeProjectId=null;munsellViewKey=null;selectedTime=0;player.hidden=true;still.hidden=true;$('mediaPlaceholder').hidden=false;$('mediaPlaceholder').textContent='解析結果を表示中。映像を見るには元ファイルを再接続してください。';
   $('scrub').disabled=project.kind==='image';$('scrub').max=project.duration;$('scrub').value=0;$('startBtn').disabled=true;render();status('保存済みの解析を読み込みました。');
 }
 async function reconnect(){
@@ -145,6 +156,7 @@ async function reconnect(){
 }
 async function analyzeSource(media,t,gen=generation,signal=null){
   if(!project||gen!==generation)return;
+  if(!currentAlgorithm()){notifyLegacyProject();return;}
   if(project.kind==='video')t=Math.min(t,Math.max(0,project.duration-.001));
   const key=timeKey(t,project.settings.interval);if(samples.get(key)?.hue)return;
   const width=media.videoWidth||media.naturalWidth,height=media.videoHeight||media.naturalHeight;if(!width||!height)return;
@@ -175,8 +187,8 @@ function scheduleLive(){
   };
   if(player.requestVideoFrameCallback)callbackId=player.requestVideoFrameCallback(tick);
 }
-player.addEventListener('timeupdate',()=>{if(!stream){selectedTime=player.currentTime;$('scrub').value=selectedTime;render();}if(!player.requestVideoFrameCallback&&!liveBusy&&!player.paused){liveBusy=true;analyzeSource(player,player.currentTime).catch(fail).finally(()=>{liveBusy=false;});}});
-player.addEventListener('seeked',()=>{if(!stream&&!liveBusy){liveBusy=true;analyzeSource(player,player.currentTime).catch(fail).finally(()=>{liveBusy=false;});}});
+player.addEventListener('timeupdate',()=>{if(!stream){selectedTime=player.currentTime;$('scrub').value=selectedTime;render();}if(project&&!currentAlgorithm()){notifyLegacyProject();return;}if(!player.requestVideoFrameCallback&&!liveBusy&&!player.paused){liveBusy=true;analyzeSource(player,player.currentTime).catch(fail).finally(()=>{liveBusy=false;});}});
+player.addEventListener('seeked',()=>{if(project&&!currentAlgorithm()){notifyLegacyProject();return;}if(!stream&&!liveBusy){liveBusy=true;analyzeSource(player,player.currentTime).catch(fail).finally(()=>{liveBusy=false;});}});
 player.addEventListener('pause',()=>persistProject().catch(fail));
 async function seek(t,signal){
   if(signal.aborted)throw new DOMException('停止','AbortError');
@@ -186,6 +198,7 @@ async function seek(t,signal){
 }
 async function scan(){
   if(!sourceReady||!sourceFile||project?.kind!=='video')return;
+  if(!currentAlgorithm()){notifyLegacyProject();return;}
   cancelScan();const control=new AbortController();scanController=control;const gen=generation;
   $('startBtn').disabled=true;$('pauseBtn').disabled=false;status('先読み解析中。再生位置とは独立して、未解析の時刻を埋めています。');
   try{const count=Math.ceil(project.duration/project.settings.interval);
@@ -197,7 +210,7 @@ async function scan(){
     }
     if(gen===generation){await persistProject();await refreshProjects();status(control.signal.aborted?'解析を停止しました。記録済みの時刻は保持しています。':'先読み解析が完了しました。');}
   }catch(e){if(e.name!=='AbortError')fail(e);else status('解析を停止しました。');}
-  finally{if(scanController===control){scanController=null;$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video');$('pauseBtn').disabled=true;}}
+  finally{if(scanController===control){scanController=null;$('startBtn').disabled=!(sourceReady&&sourceFile&&project?.kind==='video'&&currentAlgorithm());$('pauseBtn').disabled=true;}}
 }
 async function capture(){
   let chosen=null,managed=false;
@@ -226,7 +239,7 @@ function drawTimeline(target,range,withPlayhead=true){
     const x=Math.max(0,Math.floor((t-start)/span*w));const existing=columns.get(x);if(!existing||sample.timeKey<existing.timeKey)columns.set(x,sample);
   }
   for(const [x,sample] of columns){const endX=Math.min(w,Math.ceil((sample.timeKey/1000+project.settings.interval-start)/span*w));let y=0;
-    for(const color of displayPalette(sample.palette,count,order)){const height=color.width*h;c.fillStyle=color.hex;c.fillRect(x,y,Math.max(1,endX-x),height+.3);y+=height;}
+    for(const color of displayForSample(sample,count,order)){const height=color.width*h;c.fillStyle=color.hex||'#64748b';c.fillRect(x,y,Math.max(1,endX-x),height+.3);y+=height;}
   }
   if(withPlayhead&&selectedTime>=start&&selectedTime<=end){const x=(selectedTime-start)/span*w;c.fillStyle='#fff';c.fillRect(Math.max(0,x-1),0,2,h);}
 }
@@ -235,17 +248,21 @@ function render(){
     $('currentTime').textContent=formatTime(selectedTime)+'.'+String(Math.floor((selectedTime%1)*1000)).padStart(3,'0');
     $('timelineEmptyHint').hidden=samples.size>0;
     const sample=project?samples.get(timeKey(selectedTime,project.settings.interval)):null;
-    $('editRegionsBtn').hidden=project?.kind!=='image';$('editRegionsBtn').disabled=!sourceFile||!still.naturalWidth;
+    $('editRegionsBtn').hidden=project?.kind!=='image'||!currentAlgorithm();$('editRegionsBtn').disabled=!sourceFile||!still.naturalWidth;
     $('regionNote').textContent=project?.kind==='image'&&project.regions?.polygons.length?`領域強調：${project.regions.polygons.length}領域・内側${project.regions.weight}倍。パレットの比率は加重面積比。`:'';
     const hs=+$('hueSaturation').value,hv=+$('hueBrightness').value,sigma=+$('hueSmoothing').value;
     $('hueSaturationOut').textContent=hs.toFixed(2);$('hueBrightnessOut').textContent=hv.toFixed(2);$('hueSmoothingOut').textContent=sigma+'°';
     const ring=drawHueRing($('hueRing'),sample?.hue,{saturation:hs,brightness:hv,smoothing:sigma,scale:$('hueScale').value});
-    $('hueInfo').textContent=sample?.hue?`加重票の合計 ${(ring.mass*100).toFixed(1)}% · 無彩色 ${(sample.hue.achromatic/Math.max(1,sample.hue.total)*100).toFixed(1)}%`+(ring.clipped?' · 目盛り上限を超える部分があります':'') : sample?'旧データには色相分布がありません。元ファイルを開き、先読み解析すると追加できます。':'この時刻の色相分布は未解析です。';
+    $('hueInfo').textContent=sample?.hue?`加重票の合計 ${(ring.mass*100).toFixed(1)}% · 無彩色 ${(sample.hue.achromatic/Math.max(1,sample.hue.total)*100).toFixed(1)}%`+(ring.clipped?' · 目盛り上限を超える部分があります':'') : sample?'旧データには色相分布がありません。設定を適用して別解析すると追加できます。':'この時刻の色相分布は未解析です。';
     $('currentPalette').replaceChildren();$('paletteLegend').replaceChildren();
-    if(sample){for(const p of displayPalette(sample.palette,+$('topN').value,$('paletteOrder').value)){
-      const bar=document.createElement('span');bar.style.width=(p.width*100)+'%';bar.style.background=p.hex;bar.title=p.hex;$('currentPalette').append(bar);
-      const li=document.createElement('div');li.className='palette-item';const sw=document.createElement('i');sw.style.background=p.hex;const hex=document.createElement('code');hex.textContent=p.hex;const ratio=document.createElement('span');ratio.textContent=(p.share*100).toFixed(1)+'%';li.append(sw,hex,ratio);$('paletteLegend').append(li);
-    }}else $('paletteLegend').textContent=project?'この時刻は未解析':'動画または画像を開いてください';
+    const displayed=sample?displayForSample(sample):[];
+    if(sample){displayed.forEach((p,index)=>{
+      const hexColor=p.hex||'#64748b',label=p.isOther?'その他':paletteLabel(p,index),rawShare=p.rawShare??p.share,areaShare=p.share??rawShare,areaLabel=project?.regions?'加重':'面積';
+      const bar=document.createElement('span');bar.style.width=(p.width*100)+'%';bar.style.background=hexColor;bar.title=`${label} ${hexColor} · ${areaLabel} ${(areaShare*100).toFixed(1)}% · 元 ${(rawShare*100).toFixed(1)}% · 表示幅 ${(p.width*100).toFixed(1)}%`;$('currentPalette').append(bar);
+      const li=document.createElement('div');li.className='palette-item';const sw=document.createElement('i');sw.style.background=hexColor;const name=document.createElement('code');name.textContent=`${label} ${hexColor}`;name.title=name.textContent;const metrics=document.createElement('span');metrics.className='palette-metrics';metrics.textContent=`${areaLabel} ${(areaShare*100).toFixed(1)}% · 元 ${(rawShare*100).toFixed(1)}% · 幅 ${(p.width*100).toFixed(1)}%`;li.append(sw,name,metrics);$('paletteLegend').append(li);
+    });}else $('paletteLegend').textContent=project?'この時刻は未解析':'動画または画像を開いてください';
+    const munsellKey=`${project?.id||''}:${sample?.timeKey??'none'}:${$('topN').value}:${$('paletteOrder').value}:${project?.settings?.logStrength??0}`;
+    if(munsellKey!==munsellViewKey||sample!==munsellSampleRef){const points=displayed.filter(p=>!p.isOther).map(p=>({...p,munsell:munsellForPalette(p)}));munsellView.setPalette(points);showMunsellSelection(null);munsellViewKey=munsellKey;munsellSampleRef=sample;}
     const total=project?project.kind==='image'?1:Math.ceil(project.duration/project.settings.interval):0;
     $('analysisProgress').value=total?Math.min(100,samples.size/total*100):0;$('progressLabel').textContent=`${samples.size.toLocaleString()} / ${total.toLocaleString()} 点`;
     const range=viewRange();$('timelineStart').textContent=formatTime(range[0]);$('timelineEnd').textContent=formatTime(range[1]);
@@ -256,7 +273,8 @@ function render(){
 function seekPlayer(t){selectedTime=Math.max(0,Math.min(project?.duration||0,t));$('scrub').value=selectedTime;if(sourceFile&&project.kind==='video')player.currentTime=selectedTime;render();}
 function download(name,type,data){const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function exportJSON(){if(!project)return;const {handle,...meta}=project;download('color-timeline.json','application/json',JSON.stringify({format:'color-timeline',version:1,project:meta,samples:[...samples.values()].sort((a,b)=>a.timeKey-b.timeKey)},null,2));}
-function exportCSV(){if(!project)return;const lines=[['seconds','sample_key_ms','rank','hex','share']];for(const s of [...samples.values()].sort((a,b)=>a.timeKey-b.timeKey))s.palette.forEach((p,i)=>lines.push([s.t,s.timeKey,i+1,p.hex,p.share]));download('color-timeline.csv','text/csv;charset=utf-8','\uFEFF'+lines.map(row=>row.join(',')).join('\r\n'));}
+function csvCell(value){if(value==null)return '';if(typeof value==='string')return '"'+value.replaceAll('"','""')+'"';return String(value);}
+function exportCSV(){if(!project)return;const lines=[['seconds','sample_key_ms','rank','category','hex','share','rawShare','displayWidth','H','V','C']];const order=$('paletteOrder').value,k=project.settings?.logStrength??0;for(const s of [...samples.values()].sort((a,b)=>a.timeKey-b.timeKey))displayPalette(s.palette,Infinity,order,k).forEach((p,i)=>{const m=munsellForPalette(p);lines.push([s.t,s.timeKey,i+1,p.categoryName||paletteLabel(p,i),p.hex||'',p.share,p.rawShare??p.share,p.width,m?.h??'',m?.v??'',m?.c??'']);});download('color-timeline.csv','text/csv;charset=utf-8','\uFEFF'+lines.map(row=>row.map(csvCell).join(',')).join('\r\n'));}
 function exportPNG(){
   if(!project||!samples.size)return;
   const image=document.createElement('canvas');image.width=Math.min(16000,Math.max(1200,Math.ceil(project.duration/project.settings.interval)));image.height=280;
@@ -303,15 +321,16 @@ $('projectSelect').onchange=e=>selectProject(e.target.value).catch(fail);$('star
 $('pauseBtn').onclick=()=>{if(stream){for(const track of stream.getTracks())track.stop();stream=null;persistProject().then(refreshProjects).catch(fail);$('pauseBtn').disabled=true;status('キャプチャを停止しました。');}else{cancelScan();persistProject().catch(fail);}};
 $('scrub').oninput=e=>seekPlayer(+e.target.value);$('timeline').onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),[start,end]=viewRange();seekPlayer(start+(e.clientX-r.left)/r.width*(end-start));};
 for(const id of ['paletteOrder','topN','zoom'])$(id).onchange=render;
-for(const id of ['hueMerge','neutralSat','accentSat','accentMinArea'])$(id).oninput=syncOutputs;
-for(const id of ['hueMerge','neutralSat','accentSat','accentMinArea','sampleInterval','sampleSize'])$(id).addEventListener('change',()=>{if(project)status('設定変更は「設定を適用して別解析」で反映します。');});
+for(const id of ['mergeDelta','chromaTopPercent','logStrength'])$(id).oninput=syncOutputs;
+for(const id of ['mergeDelta','chromaTopPercent','logStrength','sampleInterval','sampleSize'])$(id).addEventListener('change',()=>{if(project)status('設定変更は「設定を適用して別解析」で反映します。');});
 $('applySettingsBtn').onclick=async()=>{if(!sourceFile){status('設定を適用するには元ファイルを開いてください。');return;}try{const file=sourceFile,handle=sourceHandle;await persistProject();await loadFile(file,handle);}catch(e){fail(e);}};
+$('munsellResetBtn').onclick=()=>munsellView.reset();
 $('exportJsonBtn').onclick=exportJSON;$('exportCsvBtn').onclick=exportCSV;$('exportPngBtn').onclick=exportPNG;
 $('copyDiagnosticsBtn').onclick=copyDiagnostics;
-$('editRegionsBtn').onclick=()=>{if(project?.kind!=='image'||!sourceFile)return;const target=project.id;editRegions(still,project.regions,async regions=>{try{if(project?.id!==target)return;const gen=++generation;project.regions=regions;samples.clear();render();await persistProject();await analyzeSource(still,0,gen);if(gen!==generation)return;status('領域の重みを反映しました。表示比率は加重面積比です。');}catch(e){fail(e);}});};
+$('editRegionsBtn').onclick=()=>{if(project?.kind!=='image'||!currentAlgorithm()||!sourceFile)return;const target=project.id;editRegions(still,project.regions,async regions=>{try{if(project?.id!==target)return;const gen=++generation;project.regions=regions;samples.clear();munsellViewKey=null;render();await persistProject();await analyzeSource(still,0,gen);if(gen!==generation)return;status('領域の重みを反映しました。表示比率は加重面積比です。');}catch(e){fail(e);}});};
 for(const id of ['hueSaturation','hueBrightness','hueSmoothing','hueScale'])$(id).addEventListener('input',render);
 $('exportHueBtn').onclick=()=>$('hueRing').toBlob(blob=>{if(blob)download('hue-ring.png','image/png',blob);},'image/png');
 $('importJsonBtn').onclick=()=>$('importJsonFile').click();$('importJsonFile').onchange=e=>{const file=e.target.files[0];if(file)importJSON(file).catch(fail).finally(()=>{e.target.value='';});};
-window.addEventListener('resize',render);window.addEventListener('pagehide',()=>{persistProject().catch(()=>{});});
+window.addEventListener('resize',render);window.addEventListener('pagehide',event=>{persistProject().catch(()=>{});if(!event.persisted)munsellView.destroy();});
 $('startBtn').disabled=true;syncOutputs();render();
 refreshProjects().then(()=>{$('storageStatus').textContent='解析結果はこのブラウザーのIndexedDBに保存。元動画は保存しません。';}).catch(e=>{storageOK=false;$('storageStatus').textContent='ブラウザー保存を使用できません。';fail(e);});

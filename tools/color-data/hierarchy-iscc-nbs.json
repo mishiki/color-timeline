@@ -1,0 +1,2461 @@
+{
+  "sources": {
+    "blockNamesAndMunsell": "munsellinterpol 3.6-0, inst/extdata/Centroids_ISCC-NBS.txt; underlying table: Kelly, J. Res. NBS 61(5), RP2911 (1958)",
+    "level2Membership": "Identification of Colors for Building, Building Research Institute, 1962, Report BRI-PUB-1001, Appendix B, pp. 58-59",
+    "level1Rollup": "Identification of Colors for Building, Building Research Institute, 1962, Report BRI-PUB-1001, Appendix C, p. 59",
+    "level2MembershipUrl": "https://files.eric.ed.gov/fulltext/ED026831.pdf",
+    "hierarchyReuseLicense": "Not specified in the ERIC-hosted report record/front matter reviewed; CRAN GPL notice does not apply automatically to this derived mapping."
+  },
+  "level1Groups": [
+    {
+      "id": 1,
+      "name": "Pink",
+      "level2GroupIds": [
+        25,
+        1,
+        3
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Red",
+      "level2GroupIds": [
+        26,
+        2
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Orange",
+      "level2GroupIds": [
+        4,
+        6
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Brown",
+      "level2GroupIds": [
+        5,
+        7,
+        9
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Yellow",
+      "level2GroupIds": [
+        8,
+        10,
+        12
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Olive",
+      "level2GroupIds": [
+        11,
+        13,
+        15
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Yellow green",
+      "level2GroupIds": [
+        14
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Green",
+      "level2GroupIds": [
+        16,
+        17,
+        18
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Blue",
+      "level2GroupIds": [
+        19,
+        20,
+        21
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Purple",
+      "level2GroupIds": [
+        22,
+        23,
+        24
+      ]
+    },
+    {
+      "id": 11,
+      "name": "White",
+      "level2GroupIds": [
+        27
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Gray",
+      "level2GroupIds": [
+        28
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Black",
+      "level2GroupIds": [
+        29
+      ]
+    }
+  ],
+  "level2Groups": [
+    {
+      "id": 1,
+      "name": "Pink",
+      "level1GroupId": 1,
+      "blockIds": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Red",
+      "level1GroupId": 2,
+      "blockIds": [
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Yellowish pink",
+      "level1GroupId": 1,
+      "blockIds": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Reddish orange",
+      "level1GroupId": 3,
+      "blockIds": [
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Reddish brown",
+      "level1GroupId": 4,
+      "blockIds": [
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Orange",
+      "level1GroupId": 3,
+      "blockIds": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Brown",
+      "level1GroupId": 4,
+      "blockIds": [
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Orange yellow",
+      "level1GroupId": 5,
+      "blockIds": [
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Yellowish brown",
+      "level1GroupId": 4,
+      "blockIds": [
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Yellow",
+      "level1GroupId": 5,
+      "blockIds": [
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Olive brown",
+      "level1GroupId": 6,
+      "blockIds": [
+        94,
+        95,
+        96
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Greenish yellow",
+      "level1GroupId": 5,
+      "blockIds": [
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Olive",
+      "level1GroupId": 6,
+      "blockIds": [
+        106,
+        107,
+        108,
+        109,
+        110,
+        111
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Yellow green",
+      "level1GroupId": 7,
+      "blockIds": [
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122
+      ]
+    },
+    {
+      "id": 15,
+      "name": "Olive green",
+      "level1GroupId": 6,
+      "blockIds": [
+        123,
+        124,
+        125,
+        126,
+        127,
+        128
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Yellowish green",
+      "level1GroupId": 8,
+      "blockIds": [
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Green",
+      "level1GroupId": 8,
+      "blockIds": [
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Bluish green",
+      "level1GroupId": 8,
+      "blockIds": [
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Greenish blue",
+      "level1GroupId": 9,
+      "blockIds": [
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Blue",
+      "level1GroupId": 9,
+      "blockIds": [
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188
+      ]
+    },
+    {
+      "id": 21,
+      "name": "Purplish blue",
+      "level1GroupId": 9,
+      "blockIds": [
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204
+      ]
+    },
+    {
+      "id": 22,
+      "name": "Violet",
+      "level1GroupId": 10,
+      "blockIds": [
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215
+      ]
+    },
+    {
+      "id": 23,
+      "name": "Purple",
+      "level1GroupId": 10,
+      "blockIds": [
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230
+      ]
+    },
+    {
+      "id": 24,
+      "name": "Reddish purple",
+      "level1GroupId": 10,
+      "blockIds": [
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245
+      ]
+    },
+    {
+      "id": 25,
+      "name": "Purplish pink",
+      "level1GroupId": 1,
+      "blockIds": [
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253
+      ]
+    },
+    {
+      "id": 26,
+      "name": "Purplish red",
+      "level1GroupId": 2,
+      "blockIds": [
+        254,
+        255,
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262
+      ]
+    },
+    {
+      "id": 27,
+      "name": "White",
+      "level1GroupId": 11,
+      "blockIds": [
+        263,
+        9,
+        92,
+        153,
+        189,
+        231
+      ]
+    },
+    {
+      "id": 28,
+      "name": "Gray",
+      "level1GroupId": 12,
+      "blockIds": [
+        264,
+        10,
+        93,
+        154,
+        190,
+        232,
+        265,
+        22,
+        63,
+        112,
+        155,
+        191,
+        233,
+        266,
+        23,
+        64,
+        113,
+        156,
+        192,
+        234
+      ]
+    },
+    {
+      "id": 29,
+      "name": "Black",
+      "level1GroupId": 13,
+      "blockIds": [
+        267,
+        24,
+        65,
+        114,
+        157,
+        193,
+        235
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "id": 1,
+      "name": "vivid pink",
+      "munsell": "1.5R 7/13",
+      "level2GroupId": 1,
+      "level1GroupId": 1
+    },
+    {
+      "id": 2,
+      "name": "strong pink",
+      "munsell": "1.5R 7.5/9.1",
+      "level2GroupId": 1,
+      "level1GroupId": 1
+    },
+    {
+      "id": 3,
+      "name": "deep pink",
+      "munsell": "1.9R 6.0/11.1",
+      "level2GroupId": 1,
+      "level1GroupId": 1
+    },
+    {
+      "id": 4,
+      "name": "light pink",
+      "munsell": "2.5R 8.6/5.2",
+      "level2GroupId": 1,
+      "level1GroupId": 1
+    },
+    {
+      "id": 5,
+      "name": "moderate pink",
+      "munsell": "2.5R 7.2/5.2",
+      "level2GroupId": 1,
+      "level1GroupId": 1
+    },
+    {
+      "id": 6,
+      "name": "dark pink",
+      "munsell": "2.5R 6.0/6.0",
+      "level2GroupId": 1,
+      "level1GroupId": 1
+    },
+    {
+      "id": 7,
+      "name": "pale pink",
+      "munsell": "2.5R 8.8/2.3",
+      "level2GroupId": 1,
+      "level1GroupId": 1
+    },
+    {
+      "id": 8,
+      "name": "grayish pink",
+      "munsell": "2.5R 7.2/2.3",
+      "level2GroupId": 1,
+      "level1GroupId": 1
+    },
+    {
+      "id": 9,
+      "name": "pinkish white",
+      "munsell": "7.6R 9.2/1.0",
+      "level2GroupId": 27,
+      "level1GroupId": 11
+    },
+    {
+      "id": 10,
+      "name": "pinkish gray",
+      "munsell": "7.6R 7.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 11,
+      "name": "vivid red",
+      "munsell": "5R 4/15",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 12,
+      "name": "strong red",
+      "munsell": "4.0R 4.5/12.0",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 13,
+      "name": "deep red",
+      "munsell": "5.0R 2.8/9.9",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 14,
+      "name": "very deep red",
+      "munsell": "5.0R 1.4/9.0",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 15,
+      "name": "moderate red",
+      "munsell": "4.0R 4.5/9.1",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 16,
+      "name": "dark red",
+      "munsell": "4.5R 2.8/6.8",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 17,
+      "name": "very dark red",
+      "munsell": "3.5R 1.2/4.9",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 18,
+      "name": "light grayish red",
+      "munsell": "4.9R 6.0/3.4",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 19,
+      "name": "grayish red",
+      "munsell": "4.6R 4.5/4.7",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 20,
+      "name": "dark grayish red",
+      "munsell": "3.5R 2.7/2.2",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 21,
+      "name": "blackish red",
+      "munsell": "3.5R 1.1/1.6",
+      "level2GroupId": 2,
+      "level1GroupId": 2
+    },
+    {
+      "id": 22,
+      "name": "reddish gray",
+      "munsell": "6.5R 5.5/1.1",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 23,
+      "name": "dark reddish gray",
+      "munsell": "6.0R 3.5/1.1",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 24,
+      "name": "reddish black",
+      "munsell": "6.0R 0.9/0.8",
+      "level2GroupId": 29,
+      "level1GroupId": 13
+    },
+    {
+      "id": 25,
+      "name": "vivid yellowish pink",
+      "munsell": "8.0R 7/13",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 26,
+      "name": "strong yellowish pink",
+      "munsell": "8.0R 7.5/9.0",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 27,
+      "name": "deep yellowish pink",
+      "munsell": "5.6R 6.0/12.4",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 28,
+      "name": "light yellowish pink",
+      "munsell": "0.7YR 8.6/4.8",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 29,
+      "name": "moderate yellowish pink",
+      "munsell": "0.7YR 7.2/4.8",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 30,
+      "name": "dark yellowish pink",
+      "munsell": "7.0R 6.0/6.0",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 31,
+      "name": "pale yellowish pink",
+      "munsell": "2.1YR 8.8/2.2",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 32,
+      "name": "grayish yellowish pink",
+      "munsell": "0.5YR 7.2/2.3",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 33,
+      "name": "brownish pink",
+      "munsell": "6.5YR 7.2/2.2",
+      "level2GroupId": 3,
+      "level1GroupId": 1
+    },
+    {
+      "id": 34,
+      "name": "vivid reddish orange",
+      "munsell": "9.5R 5.5/15.5",
+      "level2GroupId": 4,
+      "level1GroupId": 3
+    },
+    {
+      "id": 35,
+      "name": "strong reddish orange",
+      "munsell": "9.5R 5.5/12.0",
+      "level2GroupId": 4,
+      "level1GroupId": 3
+    },
+    {
+      "id": 36,
+      "name": "deep reddish orange",
+      "munsell": "9.5R 4.0/12.0",
+      "level2GroupId": 4,
+      "level1GroupId": 3
+    },
+    {
+      "id": 37,
+      "name": "moderate reddish orange",
+      "munsell": "9.5R 5.5/9.1",
+      "level2GroupId": 4,
+      "level1GroupId": 3
+    },
+    {
+      "id": 38,
+      "name": "dark reddish orange",
+      "munsell": "9.5R 4.0/9.1",
+      "level2GroupId": 4,
+      "level1GroupId": 3
+    },
+    {
+      "id": 39,
+      "name": "grayish reddish orange",
+      "munsell": "0.5YR 5.5/6.0",
+      "level2GroupId": 4,
+      "level1GroupId": 3
+    },
+    {
+      "id": 40,
+      "name": "strong reddish brown",
+      "munsell": "0.5YR 3.0/11.2",
+      "level2GroupId": 5,
+      "level1GroupId": 4
+    },
+    {
+      "id": 41,
+      "name": "deep reddish brown",
+      "munsell": "9.8R 1.5/7.5",
+      "level2GroupId": 5,
+      "level1GroupId": 4
+    },
+    {
+      "id": 42,
+      "name": "light reddish brown",
+      "munsell": "0.5YR 5.5/4.1",
+      "level2GroupId": 5,
+      "level1GroupId": 4
+    },
+    {
+      "id": 43,
+      "name": "moderate reddish brown",
+      "munsell": "9.6R 3.4/5.2",
+      "level2GroupId": 5,
+      "level1GroupId": 4
+    },
+    {
+      "id": 44,
+      "name": "dark reddish brown",
+      "munsell": "9.5R 1.3/3.6",
+      "level2GroupId": 5,
+      "level1GroupId": 4
+    },
+    {
+      "id": 45,
+      "name": "light grayish reddish brown",
+      "munsell": "3.0YR 5.5/2.3",
+      "level2GroupId": 5,
+      "level1GroupId": 4
+    },
+    {
+      "id": 46,
+      "name": "grayish reddish brown",
+      "munsell": "9.9R 3.4/2.3",
+      "level2GroupId": 5,
+      "level1GroupId": 4
+    },
+    {
+      "id": 47,
+      "name": "dark grayish reddish brown",
+      "munsell": "9.5R 2.0/2.0",
+      "level2GroupId": 5,
+      "level1GroupId": 4
+    },
+    {
+      "id": 48,
+      "name": "vivid orange",
+      "munsell": "4.5YR 6.6/16",
+      "level2GroupId": 6,
+      "level1GroupId": 3
+    },
+    {
+      "id": 49,
+      "name": "brilliant orange",
+      "munsell": "4.5YR 8.0/12.1",
+      "level2GroupId": 6,
+      "level1GroupId": 3
+    },
+    {
+      "id": 50,
+      "name": "strong orange",
+      "munsell": "4.5YR 6.5/12.1",
+      "level2GroupId": 6,
+      "level1GroupId": 3
+    },
+    {
+      "id": 51,
+      "name": "deep orange",
+      "munsell": "4.5YR 5.0/12.1",
+      "level2GroupId": 6,
+      "level1GroupId": 3
+    },
+    {
+      "id": 52,
+      "name": "light orange",
+      "munsell": "4.5YR 8/8.1",
+      "level2GroupId": 6,
+      "level1GroupId": 3
+    },
+    {
+      "id": 53,
+      "name": "moderate orange",
+      "munsell": "4.6YR 6.5/8.1",
+      "level2GroupId": 6,
+      "level1GroupId": 3
+    },
+    {
+      "id": 54,
+      "name": "brownish orange",
+      "munsell": "4.5YR 5.0/8.2",
+      "level2GroupId": 6,
+      "level1GroupId": 3
+    },
+    {
+      "id": 55,
+      "name": "strong brown",
+      "munsell": "5.0YR 3.5/8",
+      "level2GroupId": 7,
+      "level1GroupId": 4
+    },
+    {
+      "id": 56,
+      "name": "deep brown",
+      "munsell": "5.0YR 2.1/6",
+      "level2GroupId": 7,
+      "level1GroupId": 4
+    },
+    {
+      "id": 57,
+      "name": "light brown",
+      "munsell": "5.5YR 5.5/4.6",
+      "level2GroupId": 7,
+      "level1GroupId": 4
+    },
+    {
+      "id": 58,
+      "name": "moderate brown",
+      "munsell": "5.5YR 3.5/3.9",
+      "level2GroupId": 7,
+      "level1GroupId": 4
+    },
+    {
+      "id": 59,
+      "name": "dark brown",
+      "munsell": "5.5YR 1.6/3.6",
+      "level2GroupId": 7,
+      "level1GroupId": 4
+    },
+    {
+      "id": 60,
+      "name": "light grayish brown",
+      "munsell": "6.5YR 5.5/2.2",
+      "level2GroupId": 7,
+      "level1GroupId": 4
+    },
+    {
+      "id": 61,
+      "name": "grayish brown",
+      "munsell": "5.6YR 3.5/2.0",
+      "level2GroupId": 7,
+      "level1GroupId": 4
+    },
+    {
+      "id": 62,
+      "name": "dark grayish brown",
+      "munsell": "5.5YR 2.0/1.7",
+      "level2GroupId": 7,
+      "level1GroupId": 4
+    },
+    {
+      "id": 63,
+      "name": "light brownish gray",
+      "munsell": "6.8YR 5.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 64,
+      "name": "brownish gray",
+      "munsell": "6.4YR 3.5/0.9",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 65,
+      "name": "brownish black",
+      "munsell": "7.5YR 0.8/0.8",
+      "level2GroupId": 29,
+      "level1GroupId": 13
+    },
+    {
+      "id": 66,
+      "name": "vivid orange yellow",
+      "munsell": "9.0YR 7.2/16",
+      "level2GroupId": 8,
+      "level1GroupId": 5
+    },
+    {
+      "id": 67,
+      "name": "brilliant orange yellow",
+      "munsell": "9.0YR 8.4/12.1",
+      "level2GroupId": 8,
+      "level1GroupId": 5
+    },
+    {
+      "id": 68,
+      "name": "strong orange yellow",
+      "munsell": "9.0YR 7.2/12.1",
+      "level2GroupId": 8,
+      "level1GroupId": 5
+    },
+    {
+      "id": 69,
+      "name": "deep orange yellow",
+      "munsell": "9.0YR 6.0/12.1",
+      "level2GroupId": 8,
+      "level1GroupId": 5
+    },
+    {
+      "id": 70,
+      "name": "light orange yellow",
+      "munsell": "9.0YR 8.6/8.1",
+      "level2GroupId": 8,
+      "level1GroupId": 5
+    },
+    {
+      "id": 71,
+      "name": "moderate orange yellow",
+      "munsell": "9.0YR 7.2/8.1",
+      "level2GroupId": 8,
+      "level1GroupId": 5
+    },
+    {
+      "id": 72,
+      "name": "dark orange yellow",
+      "munsell": "9.0YR 6.0/8.1",
+      "level2GroupId": 8,
+      "level1GroupId": 5
+    },
+    {
+      "id": 73,
+      "name": "pale orange yellow",
+      "munsell": "9.1YR 8.6/4.4",
+      "level2GroupId": 8,
+      "level1GroupId": 5
+    },
+    {
+      "id": 74,
+      "name": "strong yellowish brown",
+      "munsell": "9.0YR 4.6/9.6",
+      "level2GroupId": 9,
+      "level1GroupId": 4
+    },
+    {
+      "id": 75,
+      "name": "deep yellowish brown",
+      "munsell": "9.5YR 2.9/6",
+      "level2GroupId": 9,
+      "level1GroupId": 4
+    },
+    {
+      "id": 76,
+      "name": "light yellowish brown",
+      "munsell": "9.2YR 6.6/4.7",
+      "level2GroupId": 9,
+      "level1GroupId": 4
+    },
+    {
+      "id": 77,
+      "name": "moderate yellowish brown",
+      "munsell": "9.5YR 4.5/4.0",
+      "level2GroupId": 9,
+      "level1GroupId": 4
+    },
+    {
+      "id": 78,
+      "name": "dark yellowish brown",
+      "munsell": "9.5YR 2.2/3.7",
+      "level2GroupId": 9,
+      "level1GroupId": 4
+    },
+    {
+      "id": 79,
+      "name": "light grayish yellowish brown",
+      "munsell": "9.5YR 6.4/2.4",
+      "level2GroupId": 9,
+      "level1GroupId": 4
+    },
+    {
+      "id": 80,
+      "name": "grayish yellowish brown",
+      "munsell": "9.5YR 4.6/2.1",
+      "level2GroupId": 9,
+      "level1GroupId": 4
+    },
+    {
+      "id": 81,
+      "name": "dark grayish yellow brown",
+      "munsell": "9.5YR 2.4/1.8",
+      "level2GroupId": 9,
+      "level1GroupId": 4
+    },
+    {
+      "id": 82,
+      "name": "vivid yellow",
+      "munsell": "4.0Y 7.8/14.5",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 83,
+      "name": "brilliant yellow",
+      "munsell": "4.0Y 8.8/9.5",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 84,
+      "name": "strong yellow",
+      "munsell": "4.0Y 7.2/9.5",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 85,
+      "name": "deep yellow",
+      "munsell": "4.0Y 6.0/9.5",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 86,
+      "name": "light yellow",
+      "munsell": "4.0Y 8.8/6.6",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 87,
+      "name": "moderate yellow",
+      "munsell": "4.0Y 7.2/6.6",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 88,
+      "name": "dark yellow",
+      "munsell": "4.0Y 6.0/6.6",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 89,
+      "name": "pale yellow",
+      "munsell": "4.2Y 8.9/3.6",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 90,
+      "name": "grayish yellow",
+      "munsell": "4.2Y 7.2/3.6",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 91,
+      "name": "dark grayish yellow",
+      "munsell": "4.0Y 6.0/4.1",
+      "level2GroupId": 10,
+      "level1GroupId": 5
+    },
+    {
+      "id": 92,
+      "name": "yellowish white",
+      "munsell": "4.1Y 9.2/1.3",
+      "level2GroupId": 27,
+      "level1GroupId": 11
+    },
+    {
+      "id": 93,
+      "name": "yellowish gray",
+      "munsell": "4.1Y 7.5/1.3",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 94,
+      "name": "light olive brown",
+      "munsell": "2.5Y 5.0/8.4",
+      "level2GroupId": 11,
+      "level1GroupId": 6
+    },
+    {
+      "id": 95,
+      "name": "moderate olive brown",
+      "munsell": "2.5Y 3.5/6",
+      "level2GroupId": 11,
+      "level1GroupId": 6
+    },
+    {
+      "id": 96,
+      "name": "dark olive brown",
+      "munsell": "2.5Y 1.8/2.5",
+      "level2GroupId": 11,
+      "level1GroupId": 6
+    },
+    {
+      "id": 97,
+      "name": "vivid greenish yellow",
+      "munsell": "9.5Y 7.8/14.5",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 98,
+      "name": "brilliant greenish yellow",
+      "munsell": "9.5Y 8.8/9.5",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 99,
+      "name": "strong greenish yellow",
+      "munsell": "9.5Y 7.2/9.5",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 100,
+      "name": "deep greenish yellow",
+      "munsell": "9.5Y 6.0/9.5",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 101,
+      "name": "light greenish yellow",
+      "munsell": "9.5Y 8.8/6.6",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 102,
+      "name": "moderate greenish yellow",
+      "munsell": "9.5Y 7.2/6.6",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 103,
+      "name": "dark greenish yellow",
+      "munsell": "9.5Y 6.0/6.6",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 104,
+      "name": "pale greenish yellow",
+      "munsell": "9.5Y 8.9/4.1",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 105,
+      "name": "grayish greenish yellow",
+      "munsell": "9.5Y 7.2/4.1",
+      "level2GroupId": 12,
+      "level1GroupId": 5
+    },
+    {
+      "id": 106,
+      "name": "light olive",
+      "munsell": "8.1Y 5.1/8.0",
+      "level2GroupId": 13,
+      "level1GroupId": 6
+    },
+    {
+      "id": 107,
+      "name": "moderate olive",
+      "munsell": "8.0Y 3.5/5.8",
+      "level2GroupId": 13,
+      "level1GroupId": 6
+    },
+    {
+      "id": 108,
+      "name": "dark olive",
+      "munsell": "8.0Y 1.7/3.2",
+      "level2GroupId": 13,
+      "level1GroupId": 6
+    },
+    {
+      "id": 109,
+      "name": "light grayish olive",
+      "munsell": "8.3Y 5.5/2.4",
+      "level2GroupId": 13,
+      "level1GroupId": 6
+    },
+    {
+      "id": 110,
+      "name": "grayish olive",
+      "munsell": "8.1Y 3.5/2.3",
+      "level2GroupId": 13,
+      "level1GroupId": 6
+    },
+    {
+      "id": 111,
+      "name": "dark grayish olive",
+      "munsell": "8.0Y 2.0/2.0",
+      "level2GroupId": 13,
+      "level1GroupId": 6
+    },
+    {
+      "id": 112,
+      "name": "light olive gray",
+      "munsell": "7.4Y 5.5/1.3",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 113,
+      "name": "olive gray",
+      "munsell": "8.1Y 3.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 114,
+      "name": "olive black",
+      "munsell": "9.0Y 0.9/0.8",
+      "level2GroupId": 29,
+      "level1GroupId": 13
+    },
+    {
+      "id": 115,
+      "name": "vivid yellow green",
+      "munsell": "5.0GY 7.5/14.5",
+      "level2GroupId": 14,
+      "level1GroupId": 7
+    },
+    {
+      "id": 116,
+      "name": "brilliant yellow green",
+      "munsell": "5.0GY 8.5/9.1",
+      "level2GroupId": 14,
+      "level1GroupId": 7
+    },
+    {
+      "id": 117,
+      "name": "strong yellow green",
+      "munsell": "5.0GY 6.0/9.1",
+      "level2GroupId": 14,
+      "level1GroupId": 7
+    },
+    {
+      "id": 118,
+      "name": "deep yellow green",
+      "munsell": "5.0GY 4.0/9.1",
+      "level2GroupId": 14,
+      "level1GroupId": 7
+    },
+    {
+      "id": 119,
+      "name": "light yellow green",
+      "munsell": "5.0GY 8.6/5.2",
+      "level2GroupId": 14,
+      "level1GroupId": 7
+    },
+    {
+      "id": 120,
+      "name": "moderate yellow green",
+      "munsell": "5.0GY 6.0/5.2",
+      "level2GroupId": 14,
+      "level1GroupId": 7
+    },
+    {
+      "id": 121,
+      "name": "pale yellow green",
+      "munsell": "3.5GY 8.7/2.2",
+      "level2GroupId": 14,
+      "level1GroupId": 7
+    },
+    {
+      "id": 122,
+      "name": "grayish yellow green",
+      "munsell": "4.4GY 6.1/2.2",
+      "level2GroupId": 14,
+      "level1GroupId": 7
+    },
+    {
+      "id": 123,
+      "name": "strong olive green",
+      "munsell": "5.0GY 3.2/7.8",
+      "level2GroupId": 15,
+      "level1GroupId": 6
+    },
+    {
+      "id": 124,
+      "name": "deep olive green",
+      "munsell": "5.0GY 2.4/7.1",
+      "level2GroupId": 15,
+      "level1GroupId": 6
+    },
+    {
+      "id": 125,
+      "name": "moderate olive green",
+      "munsell": "5.0GY 3.5/5.2",
+      "level2GroupId": 15,
+      "level1GroupId": 6
+    },
+    {
+      "id": 126,
+      "name": "dark olive green",
+      "munsell": "5.0GY 1.8/3.7",
+      "level2GroupId": 15,
+      "level1GroupId": 6
+    },
+    {
+      "id": 127,
+      "name": "grayish olive green",
+      "munsell": "5.0GY 3.5/2.2",
+      "level2GroupId": 15,
+      "level1GroupId": 6
+    },
+    {
+      "id": 128,
+      "name": "dark grayish olive green",
+      "munsell": "5.0GY 2.0/2.0",
+      "level2GroupId": 15,
+      "level1GroupId": 6
+    },
+    {
+      "id": 129,
+      "name": "vivid yellowish green",
+      "munsell": "0.5G 7/15.5",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 130,
+      "name": "brilliant yellowish green",
+      "munsell": "0.5G 8.0/9.1",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 131,
+      "name": "strong yellowish green",
+      "munsell": "0.5G 5.5/9.1",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 132,
+      "name": "deep yellowish green",
+      "munsell": "0.5G 3.5/11.5",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 133,
+      "name": "very deep yellowish green",
+      "munsell": "0.5G 2.0/9.2",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 134,
+      "name": "very light yellowish green",
+      "munsell": "0.5G 9.1/5.1",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 135,
+      "name": "light yellowish green",
+      "munsell": "0.5G 7.5/5.1",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 136,
+      "name": "moderate yellowish green",
+      "munsell": "0.5G 5.5/5.1",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 137,
+      "name": "dark yellowish green",
+      "munsell": "0.5G 3.5/5.1",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 138,
+      "name": "very dark yellowish green",
+      "munsell": "0.5G 1.5/4.9",
+      "level2GroupId": 16,
+      "level1GroupId": 8
+    },
+    {
+      "id": 139,
+      "name": "vivid green",
+      "munsell": "6.5G 5.2/18",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 140,
+      "name": "brilliant green",
+      "munsell": "6.0G 7.4/9.1",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 141,
+      "name": "strong green",
+      "munsell": "6.0G 4.5/9.1",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 142,
+      "name": "deep green",
+      "munsell": "6.0G 2.3/9.1",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 143,
+      "name": "very light green",
+      "munsell": "6.0G 8.6/5.1",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 144,
+      "name": "light green",
+      "munsell": "6.0G 6.5/5.1",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 145,
+      "name": "moderate green",
+      "munsell": "6.0G 4.5/5.1",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 146,
+      "name": "dark green",
+      "munsell": "6.0G 2.7/5.0",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 147,
+      "name": "very dark green",
+      "munsell": "6.0G 1.3/4.9",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 148,
+      "name": "very pale green",
+      "munsell": "9.0G 8.7/1.8",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 149,
+      "name": "pale green",
+      "munsell": "9.0G 6.5/1.8",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 150,
+      "name": "grayish green",
+      "munsell": "9.0G 4.5/1.8",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 151,
+      "name": "dark grayish green",
+      "munsell": "9.0G 2.8/1.6",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 152,
+      "name": "blackish green",
+      "munsell": "9.0G 1.1/1.4",
+      "level2GroupId": 17,
+      "level1GroupId": 8
+    },
+    {
+      "id": 153,
+      "name": "greenish white",
+      "munsell": "7.0G 9.2/0.8",
+      "level2GroupId": 27,
+      "level1GroupId": 11
+    },
+    {
+      "id": 154,
+      "name": "light greenish gray",
+      "munsell": "7.0G 7.5/0.8",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 155,
+      "name": "greenish gray",
+      "munsell": "7.0G 5.5/0.8",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 156,
+      "name": "dark greenish gray",
+      "munsell": "7.0G 3.5/0.8",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 157,
+      "name": "greenish black",
+      "munsell": "7.5G 0.9/0.7",
+      "level2GroupId": 29,
+      "level1GroupId": 13
+    },
+    {
+      "id": 158,
+      "name": "vivid bluish green",
+      "munsell": "4.5BG 5.3/15.5",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 159,
+      "name": "brilliant bluish green",
+      "munsell": "4.5BG 7.3/9.0",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 160,
+      "name": "strong bluish green",
+      "munsell": "4.5BG 4.5/9.0",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 161,
+      "name": "deep bluish green",
+      "munsell": "4.5BG 2.3/9.0",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 162,
+      "name": "very light bluish green",
+      "munsell": "4.5BG 8.5/5.0",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 163,
+      "name": "light bluish green",
+      "munsell": "4.5BG 6.5/5.0",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 164,
+      "name": "moderate bluish green",
+      "munsell": "4.5BG 4.5/5.0",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 165,
+      "name": "dark bluish green",
+      "munsell": "4.5BG 2.7/5.0",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 166,
+      "name": "very dark bluish green",
+      "munsell": "4.5BG 1.3/4.9",
+      "level2GroupId": 18,
+      "level1GroupId": 8
+    },
+    {
+      "id": 167,
+      "name": "vivid greenish blue",
+      "munsell": "4.5B 5.2/13",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 168,
+      "name": "brilliant greenish blue",
+      "munsell": "4.5B 6.8/9.0",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 169,
+      "name": "strong greenish blue",
+      "munsell": "4.5B 4.5/9.0",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 170,
+      "name": "deep greenish blue",
+      "munsell": "4.5B 2.5/9.0",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 171,
+      "name": "very light greenish blue",
+      "munsell": "4.5B 8.2/5.2",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 172,
+      "name": "light greenish blue",
+      "munsell": "4.5B 6.5/5.2",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 173,
+      "name": "moderate greenish blue",
+      "munsell": "4.5B 4.5/5.2",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 174,
+      "name": "dark greenish blue",
+      "munsell": "4.5B 2.7/5.0",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 175,
+      "name": "very dark greenish blue",
+      "munsell": "4.5B 1.3/4.9",
+      "level2GroupId": 19,
+      "level1GroupId": 9
+    },
+    {
+      "id": 176,
+      "name": "vivid blue",
+      "munsell": "3.0PB 4.2/15",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 177,
+      "name": "brilliant blue",
+      "munsell": "3.0PB 6.4/11.0",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 178,
+      "name": "strong blue",
+      "munsell": "3.0PB 4.2/11.0",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 179,
+      "name": "deep blue",
+      "munsell": "3.0PB 2.0/9.0",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 180,
+      "name": "very light blue",
+      "munsell": "2.4PB 8.2/7.2",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 181,
+      "name": "light blue",
+      "munsell": "2.7PB 6.5/7.3",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 182,
+      "name": "moderate blue",
+      "munsell": "2.9PB 4.2/7.2",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 183,
+      "name": "dark blue",
+      "munsell": "2.8PB 1.7/5.0",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 184,
+      "name": "very pale blue",
+      "munsell": "0.9PB 8.4/3.0",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 185,
+      "name": "pale blue",
+      "munsell": "0.9PB 6.5/3.0",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 186,
+      "name": "grayish blue",
+      "munsell": "0.9PB 4.2/3.0",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 187,
+      "name": "dark grayish blue",
+      "munsell": "9.5B 2.6/1.9",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 188,
+      "name": "blackish blue",
+      "munsell": "9.5B 1.1/1.5",
+      "level2GroupId": 20,
+      "level1GroupId": 9
+    },
+    {
+      "id": 189,
+      "name": "bluish white",
+      "munsell": "9.5B 9.1/1.0",
+      "level2GroupId": 27,
+      "level1GroupId": 11
+    },
+    {
+      "id": 190,
+      "name": "light bluish gray",
+      "munsell": "9.5B 7.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 191,
+      "name": "bluish gray",
+      "munsell": "9.5B 5.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 192,
+      "name": "dark bluish gray",
+      "munsell": "9.5B 3.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 193,
+      "name": "bluish black",
+      "munsell": "9.5B 1.0/0.7",
+      "level2GroupId": 29,
+      "level1GroupId": 13
+    },
+    {
+      "id": 194,
+      "name": "vivid purplish blue",
+      "munsell": "8.0PB 2.5/22",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 195,
+      "name": "brilliant purplish blue",
+      "munsell": "8.0PB 6.0/10.8",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 196,
+      "name": "strong purplish blue",
+      "munsell": "8.0PB 4.1/11.4",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 197,
+      "name": "deep purplish blue",
+      "munsell": "8.0PB 1.6/9.1",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 198,
+      "name": "very light purplish blue",
+      "munsell": "7.0PB 7.8/6.1",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 199,
+      "name": "light purplish blue",
+      "munsell": "7.5PB 6.0/6.8",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 200,
+      "name": "moderate purplish blue",
+      "munsell": "8.0PB 3.5/6.9",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 201,
+      "name": "dark purplish blue",
+      "munsell": "7.9PB 1.1/4.7",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 202,
+      "name": "very pale purplish blue",
+      "munsell": "7.0PB 8.2/4.1",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 203,
+      "name": "pale purplish blue",
+      "munsell": "7.0PB 6.0/4.1",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 204,
+      "name": "grayish purplish blue",
+      "munsell": "7.2PB 3.3/4.0",
+      "level2GroupId": 21,
+      "level1GroupId": 9
+    },
+    {
+      "id": 205,
+      "name": "vivid violet",
+      "munsell": "1.0P 2.7/21",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 206,
+      "name": "brilliant violet",
+      "munsell": "1.0P 5.9/11.1",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 207,
+      "name": "strong violet",
+      "munsell": "1.0P 3.5/11.1",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 208,
+      "name": "deep violet",
+      "munsell": "1.0P 1.4/10.3",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 209,
+      "name": "very light violet",
+      "munsell": "1.0P 7.9/7",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 210,
+      "name": "light violet",
+      "munsell": "1.0P 6.0/7.2",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 211,
+      "name": "moderate violet",
+      "munsell": "1.0P 3.5/7.2",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 212,
+      "name": "dark violet",
+      "munsell": "1.0P 1.3/5.0",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 213,
+      "name": "very pale violet",
+      "munsell": "1.0P 8.2/4.1",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 214,
+      "name": "pale violet",
+      "munsell": "1.0P 6.0/4.1",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 215,
+      "name": "grayish violet",
+      "munsell": "1.0P 3.3/4.1",
+      "level2GroupId": 22,
+      "level1GroupId": 10
+    },
+    {
+      "id": 216,
+      "name": "vivid purple",
+      "munsell": "6.0P 3.5/20",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 217,
+      "name": "brilliant purple",
+      "munsell": "6.0P 6.7/11.1",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 218,
+      "name": "strong purple",
+      "munsell": "6.0P 4.5/11.1",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 219,
+      "name": "deep purple",
+      "munsell": "6.0P 2.8/10.2",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 220,
+      "name": "very deep purple",
+      "munsell": "6.0P 1.2/10.2",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 221,
+      "name": "very light purple",
+      "munsell": "6.0P 8.0/7.2",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 222,
+      "name": "light purple",
+      "munsell": "6.0P 6.5/7.2",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 223,
+      "name": "moderate purple",
+      "munsell": "6.0P 4.5/7.2",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 224,
+      "name": "dark purple",
+      "munsell": "6.0P 2.7/5.1",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 225,
+      "name": "very dark purple",
+      "munsell": "6.0P 1.1/4.9",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 226,
+      "name": "very pale purple",
+      "munsell": "5.4P 8.4/3.3",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 227,
+      "name": "pale purple",
+      "munsell": "6.8P 6.4/3.0",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 228,
+      "name": "grayish purple",
+      "munsell": "7.8P 4.5/2.9",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 229,
+      "name": "dark grayish purple",
+      "munsell": "10.0P 2.8/2.0",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 230,
+      "name": "blackish purple",
+      "munsell": "10.0P 1.0/1.4",
+      "level2GroupId": 23,
+      "level1GroupId": 10
+    },
+    {
+      "id": 231,
+      "name": "purplish white",
+      "munsell": "9.0P 9.1/1.0",
+      "level2GroupId": 27,
+      "level1GroupId": 11
+    },
+    {
+      "id": 232,
+      "name": "light purplish gray",
+      "munsell": "9.0P 7.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 233,
+      "name": "purplish gray",
+      "munsell": "10.0P 5.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 234,
+      "name": "dark purplish gray",
+      "munsell": "10.0P 3.5/1.0",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 235,
+      "name": "purplish black",
+      "munsell": "10.0P 1.0/0.7",
+      "level2GroupId": 29,
+      "level1GroupId": 13
+    },
+    {
+      "id": 236,
+      "name": "vivid reddish purple",
+      "munsell": "1.0RP 4/19",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 237,
+      "name": "strong reddish purple",
+      "munsell": "1.0RP 4.5/11.1",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 238,
+      "name": "deep reddish purple",
+      "munsell": "1.0RP 2.8/10.3",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 239,
+      "name": "very deep reddish purple",
+      "munsell": "1.0RP 1.3/10.3",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 240,
+      "name": "light reddish purple",
+      "munsell": "1.0RP 6.0/7.2",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 241,
+      "name": "moderate reddish purple",
+      "munsell": "1.0RP 4.5/7.2",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 242,
+      "name": "dark reddish purple",
+      "munsell": "1.0RP 2.7/5.1",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 243,
+      "name": "very dark reddish purple",
+      "munsell": "1.0RP 1.1/5.0",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 244,
+      "name": "pale reddish purple",
+      "munsell": "1.0RP 6.0/4.1",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 245,
+      "name": "grayish reddish purple",
+      "munsell": "1.0RP 4.5/4.1",
+      "level2GroupId": 24,
+      "level1GroupId": 10
+    },
+    {
+      "id": 246,
+      "name": "brilliant purplish pink",
+      "munsell": "4.0RP 7.9/11",
+      "level2GroupId": 25,
+      "level1GroupId": 1
+    },
+    {
+      "id": 247,
+      "name": "strong purplish pink",
+      "munsell": "4.0RP 7/14.5",
+      "level2GroupId": 25,
+      "level1GroupId": 1
+    },
+    {
+      "id": 248,
+      "name": "deep purplish pink",
+      "munsell": "4.0RP 6.0/12.0",
+      "level2GroupId": 25,
+      "level1GroupId": 1
+    },
+    {
+      "id": 249,
+      "name": "light purplish pink",
+      "munsell": "4.0RP 8.3/7.1",
+      "level2GroupId": 25,
+      "level1GroupId": 1
+    },
+    {
+      "id": 250,
+      "name": "moderate purplish pink",
+      "munsell": "4.0RP 7.0/7.1",
+      "level2GroupId": 25,
+      "level1GroupId": 1
+    },
+    {
+      "id": 251,
+      "name": "dark purplish pink",
+      "munsell": "6.0RP 6.0/7.2",
+      "level2GroupId": 25,
+      "level1GroupId": 1
+    },
+    {
+      "id": 252,
+      "name": "pale purplish pink",
+      "munsell": "4.0RP 8.5/3.5",
+      "level2GroupId": 25,
+      "level1GroupId": 1
+    },
+    {
+      "id": 253,
+      "name": "grayish purplish pink",
+      "munsell": "4.0RP 7.0/3.5",
+      "level2GroupId": 25,
+      "level1GroupId": 1
+    },
+    {
+      "id": 254,
+      "name": "vivid purplish red",
+      "munsell": "7.0RP 4/17",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 255,
+      "name": "strong purplish red",
+      "munsell": "7.0RP 4.5/11.9",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 256,
+      "name": "deep purplish red",
+      "munsell": "7.0RP 2.8/11.0",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 257,
+      "name": "very deep purplish red",
+      "munsell": "7.0RP 1.3/9.0",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 258,
+      "name": "moderate purplish red",
+      "munsell": "7.0RP 4.5/9.0",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 259,
+      "name": "dark purplish red",
+      "munsell": "7.0RP 2.7/6.3",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 260,
+      "name": "very dark purplish red",
+      "munsell": "7.0RP 1.2/4.9",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 261,
+      "name": "light grayish purplish red",
+      "munsell": "7.0RP 6.0/4.0",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 262,
+      "name": "grayish purplish red",
+      "munsell": "7.0RP 4.5/5.2",
+      "level2GroupId": 26,
+      "level1GroupId": 2
+    },
+    {
+      "id": 263,
+      "name": "white",
+      "munsell": "3.0Y 9.25/0.06",
+      "level2GroupId": 27,
+      "level1GroupId": 11
+    },
+    {
+      "id": 264,
+      "name": "light gray",
+      "munsell": "3.0Y 7.5/0.06",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 265,
+      "name": "medium gray",
+      "munsell": "3.0Y 5.5/0.06",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 266,
+      "name": "dark gray",
+      "munsell": "N 3.5/",
+      "level2GroupId": 28,
+      "level1GroupId": 12
+    },
+    {
+      "id": 267,
+      "name": "black",
+      "munsell": "N 1.25/",
+      "level2GroupId": 29,
+      "level1GroupId": 13
+    }
+  ]
+}

@@ -300,6 +300,13 @@ input[type="range"] { accent-color: var(--accent); }
 .hue-controls output { float: right; }
 .hue-controls select { width: 100%; }
 .hue-panel p, .hue-panel details { font-size: 12px; line-height: 1.6; color: #a9bdd3; }
+.munsell-panel { padding-bottom: 13px; }
+.munsell-panel .panel-heading { min-height: 58px; }
+.munsell-panel .panel-heading .button { min-height: 29px; padding: 0 9px; font-size: 11px; }
+#munsellCanvas { display: block; width: 100%; height: auto; aspect-ratio: 13 / 10.5; touch-action: none; cursor: grab; }
+#munsellCanvas:active { cursor: grabbing; }
+.munsell-info, .munsell-selection { margin: 8px 16px 0; color: #94a8bf; font-size: 11px; line-height: 1.65; }
+.munsell-selection { min-height: 18px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border-soft); color: #c3d3e4; font-variant-numeric: tabular-nums; }
 
 
 .region-dialog { width: min(960px, 94vw); max-height: 92vh; overflow: auto; color: #e8eef6; background: #142031; border: 1px solid #526379; border-radius: 16px; }

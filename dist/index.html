@@ -100,7 +100,7 @@
                   <label class="inline-select"><span>表示</span>
                     <span class="select-wrap compact-select">
                       <select id="topN" aria-label="表示する色の数">
-                        <option value="5">上位 5 色</option><option value="4">上位 4 色</option><option value="3">上位 3 色</option>
+                        <option value="7" selected>上位 7 色</option><option value="6">上位 6 色</option><option value="5">上位 5 色</option><option value="4">上位 4 色</option><option value="3">上位 3 色</option>
                       </select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
                     </span>
                   </label>
@@ -191,7 +191,16 @@
                 <label>目盛り<select id="hueScale"><option value="auto">形を比較（自動拡大）</option><option value="fixed">固定（1度あたり最大5%）</option></select></label>
               </div>
               <p id="hueInfo" aria-live="polite"></p>
-              <details><summary>読み方と計算方法</summary><p>上が赤、時計回りに黄・緑・青。角度は色相、棒の長さは加重票。色は色相の目印で、元画像の彩度・明度ではありません。</p><p>重み0は減衰なし、1は彩度S・明度Vをそのまま掛けます。票 = (1−a+aS) × (1−b+bV)。初期値はS×V。黒白灰の完全な無彩色は色相を持たないため別集計。透明度24未満を除いた縮小画像の全画素数で割ります。5色への集約前に計算します。</p><p>平滑化は円周上のガウス平均（幅は標準偏差）。重み・幅の変更は保存済み分布に即時反映し、再解析不要です。自動拡大は各フレームの最大値で伸縮するため、量の比較には固定目盛りを使ってください。</p></details>
+              <details><summary>読み方と計算方法</summary><p>上が赤、時計回りに黄・緑・青。角度は色相、棒の長さは加重票。色は色相の目印で、元画像の彩度・明度ではありません。</p><p>重み0は減衰なし、1は彩度S・明度Vをそのまま掛けます。票 = (1−a+aS) × (1−b+bV)。初期値はS×V。黒白灰の完全な無彩色は色相を持たないため別集計。透明度24未満を除いた縮小画像の全画素数で割ります。代表色への分類前に計算します。</p><p>平滑化は円周上のガウス平均（幅は標準偏差）。重み・幅の変更は保存済み分布に即時反映し、再解析不要です。自動拡大は各フレームの最大値で伸縮するため、量の比較には固定目盛りを使ってください。</p></details>
+            </section>
+            <section class="panel munsell-panel" aria-label="マンセル色立体">
+              <div class="panel-heading">
+                <div><span class="eyebrow">MUNSELL COLOR SPACE</span><h2>マンセル色立体</h2></div>
+                <button id="munsellResetBtn" class="button button-quiet" type="button">視点を戻す</button>
+              </div>
+              <canvas id="munsellCanvas" width="520" height="420" role="img" aria-label="現在のパレットをマンセル色立体上に表示。ドラッグで回転、ホイールで拡大縮小"></canvas>
+              <p id="munsellInfo" class="munsell-info">RGBからの近似推定です。Hは円周方向、Vは上下、Cは中心からの距離。点の面積は元の面積比です。ドラッグで回転、ホイールで拡大縮小できます。</p>
+              <p id="munsellSelection" class="munsell-selection" aria-live="polite">色の点を選ぶとHEXとHVCを表示します。</p>
             </section>
             <section class="settings-panel panel">
               <details id="settingsDetails">
@@ -201,10 +210,9 @@
                   <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
                 </summary>
                 <div class="settings-content">
-                  <div class="range-setting"><div class="range-heading"><label for="hueMerge">近似色のまとめ幅</label><output id="hueMergeOut" for="hueMerge">18°</output></div><input id="hueMerge" type="range" min="0" max="45" step="1" value="18"><span class="range-endpoints"><span>細かく</span><span>まとめる</span></span></div>
-                  <div class="range-setting"><div class="range-heading"><label for="neutralSat">無彩色とみなす彩度</label><output id="neutralSatOut" for="neutralSat">0.08</output></div><input id="neutralSat" type="range" min="0" max="0.16" step="0.01" value="0.08"><span class="range-endpoints"><span>低い</span><span>高い</span></span></div>
-                  <div class="range-setting"><div class="range-heading"><label for="accentSat">アクセント色の彩度</label><output id="accentSatOut" for="accentSat">0.58</output></div><input id="accentSat" type="range" min="0.3" max="0.9" step="0.02" value="0.58"><span class="range-endpoints"><span>低い</span><span>高い</span></span></div>
-                  <div class="range-setting"><div class="range-heading"><label for="accentMinArea">アクセント色の最小面積</label><output id="accentMinAreaOut" for="accentMinArea">0.4%</output></div><input id="accentMinArea" type="range" min="0.1" max="3" step="0.1" value="0.4"><span class="range-endpoints"><span>小さい</span><span>大きい</span></span></div>
+                  <div class="range-setting"><div class="range-heading"><label for="mergeDelta">近似色をまとめる差</label><output id="mergeDeltaOut" for="mergeDelta">0.035</output></div><input id="mergeDelta" type="range" min="0" max="0.15" step="0.001" value="0.035"><span class="range-endpoints"><span>細かく</span><span>まとめる</span></span></div>
+                  <div class="range-setting"><div class="range-heading"><label for="chromaTopPercent">代表色に使うクロマ上位</label><output id="chromaTopPercentOut" for="chromaTopPercent">20%</output></div><input id="chromaTopPercent" type="range" min="1" max="100" step="1" value="20"><span class="range-endpoints"><span>上位 1%</span><span>全体</span></span></div>
+                  <div class="range-setting"><div class="range-heading"><label for="logStrength">面積差の圧縮</label><output id="logStrengthOut" for="logStrength">10</output></div><input id="logStrength" type="range" min="0" max="100" step="1" value="10"><span class="range-endpoints"><span>圧縮なし</span><span>強い</span></span></div>
                   <label class="setting-control sample-size-control"><span>解析サイズ</span><span class="select-wrap"><select id="sampleSize" aria-label="解析サイズ"><option value="96">96 px</option><option value="192" selected>192 px</option><option value="320">320 px</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></span></label>
                   <button id="applySettingsBtn" class="button button-secondary apply-settings" type="button">設定を適用して別解析</button>
                 </div>
