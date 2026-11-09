@@ -1,3 +1,4 @@
+import { initPanelLayout } from './panel-layout.js';
 import { DEFAULT_SETTINGS } from './palette.js';
 import { listProjects, getProject, putProject, putSample, getSamples } from './storage.js';
 import { VERSION, timeKey, formatTime, displayPalette, validateImport } from './model.js';
@@ -252,6 +253,7 @@ function render(){
     $('regionNote').textContent=project?.kind==='image'&&project.regions?.polygons.length?`領域強調：${project.regions.polygons.length}領域・内側${project.regions.weight}倍。パレットの比率は加重面積比。`:'';
     const hs=+$('hueSaturation').value,hv=+$('hueBrightness').value,sigma=+$('hueSmoothing').value;
     $('hueSaturationOut').textContent=hs.toFixed(2);$('hueBrightnessOut').textContent=hv.toFixed(2);$('hueSmoothingOut').textContent=sigma+'°';
+    const ringSize=Math.max(240,Math.min(2048,Math.round($('hueRing').getBoundingClientRect().width*devicePixelRatio)));if($('hueRing').width!==ringSize){$('hueRing').width=ringSize;$('hueRing').height=ringSize;}
     const ring=drawHueRing($('hueRing'),sample?.hue,{saturation:hs,brightness:hv,smoothing:sigma,scale:$('hueScale').value});
     $('hueInfo').textContent=sample?.hue?`加重票の合計 ${(ring.mass*100).toFixed(1)}% · 無彩色 ${(sample.hue.achromatic/Math.max(1,sample.hue.total)*100).toFixed(1)}%`+(ring.clipped?' · 目盛り上限を超える部分があります':'') : sample?'旧データには色相分布がありません。設定を適用して別解析すると追加できます。':'この時刻の色相分布は未解析です。';
     $('currentPalette').replaceChildren();$('paletteLegend').replaceChildren();
@@ -342,3 +344,7 @@ $('importJsonBtn').onclick=()=>$('importJsonFile').click();$('importJsonFile').o
 window.addEventListener('resize',render);window.addEventListener('pagehide',event=>{persistProject().catch(()=>{});if(!event.persisted)munsellView.destroy();});
 $('startBtn').disabled=true;syncOutputs();render();
 refreshProjects().then(()=>{$('storageStatus').textContent='解析結果はこのブラウザーのIndexedDBに保存。元動画は保存しません。';}).catch(e=>{storageOK=false;$('storageStatus').textContent='ブラウザー保存を使用できません。';fail(e);});
+
+const panelLayout=initPanelLayout(document.querySelector('.workspace'),{onLayoutChange:render});
+const panelResizeObserver=new ResizeObserver(()=>render());
+for(const id of ['timeline','hueRing'])panelResizeObserver.observe($(id));

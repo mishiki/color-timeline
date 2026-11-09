@@ -1,0 +1,45 @@
+/* Layout layer for initPanelLayout(). It is deliberately independent of the app theme. */
+.panel-layout-toolbar { display:flex; align-items:center; gap:10px; min-height:35px; margin:0 0 10px; padding:6px 10px; border:1px solid rgba(116,147,184,.22); border-radius:9px; color:#98abc0; background:rgba(16,29,46,.72); font-size:11px; }
+.panel-layout-label { color:#d8e4f2; font-weight:700; }
+.panel-layout-hint { flex:1; color:#7d91aa; }
+.panel-layout-toolbar .button { min-height:27px; padding:0 9px; font-size:10px; }
+.panel-layout-enabled { position:relative; --panel-layout-ratio:.66; }
+.panel-layout-enabled.workspace { --layout-left:clamp(280px,calc((100% - 16px) * var(--panel-layout-ratio)),calc(100% - 296px)); grid-template-columns:var(--layout-left) minmax(0,1fr); gap:16px; }
+.panel-layout-enabled .editor-column,.panel-layout-enabled .inspector-column { grid-template-columns:minmax(0,1fr); align-content:start; min-height:100px; }
+.panel-layout-splitter { position:absolute; z-index:8; top:0; bottom:0; left:calc(var(--layout-left) + 8px); width:12px; transform:translateX(-50%); cursor:col-resize; touch-action:none; }
+.panel-layout-splitter::before { content:""; position:absolute; inset:10px 5px; border-radius:5px; background:rgba(112,152,187,.18); transition:background .15s ease; }
+.panel-layout-splitter:hover::before,.panel-layout-splitter:focus-visible::before { background:rgba(100,213,192,.78); }
+.panel-layout-heading-ready { position:relative; }
+.panel-layout-tools { display:inline-flex; align-items:center; flex:0 0 auto; order:-1; gap:2px; margin-right:7px; }
+.panel-drag-handle,.panel-layout-grip { width:25px; height:25px; padding:0; border:1px solid rgba(121,151,181,.24); border-radius:6px; color:#8ca6bd; background:rgba(30,47,67,.72); cursor:grab; font-size:16px; line-height:1; touch-action:none; }
+.panel-drag-handle:hover,.panel-drag-handle:focus-visible { border-color:#65cabb; color:#b8f2e7; outline:none; }
+.panel-layout-move { width:21px; height:22px; padding:0; border:0; border-radius:4px; color:#8ca6bd; background:transparent; cursor:pointer; font-size:13px; line-height:1; }
+.panel-layout-move:hover,.panel-layout-move:focus-visible { color:#b8f2e7; background:rgba(100,213,192,.12); outline:none; }
+.panel-layout-dragging { opacity:.38; }
+.panel-layout-dragging-active { cursor:grabbing; user-select:none; }
+.panel-layout-placeholder { box-sizing:border-box; margin:0; border:1px dashed rgba(100,213,192,.8); border-radius:10px; background:rgba(78,186,168,.08); }
+.panel-layout-enabled .media-stage { min-height:180px; aspect-ratio:16 / 10; }
+.panel-layout-enabled .hue-panel canvas { display:block; width:100%; max-width:none; height:auto; aspect-ratio:1; margin-inline:auto; }
+.panel-layout-enabled .munsell-panel:not(.expanded) #munsellCanvas { width:100%; height:auto; aspect-ratio:1; }
+.panel-layout-enabled .notes-panel { display:block; }
+.panel-layout-enabled .panel-heading { flex-wrap:wrap; row-gap:5px; }
+.panel-layout-enabled .panel-heading > :first-child { min-width:0; }
+@media (max-width:760px) {
+  .panel-layout-toolbar { flex-wrap:wrap; }
+  .panel-layout-hint { flex-basis:100%; order:3; }
+  .panel-layout-enabled.workspace { display:grid; grid-template-columns:minmax(0,1fr); gap:11px; }
+  .panel-layout-enabled .editor-column,.panel-layout-enabled .inspector-column { display:contents; }
+  .panel-layout-enabled .panel { grid-column:1; }
+  .panel-layout-splitter { display:none; }
+  .panel-layout-enabled .media-stage { min-height:145px; aspect-ratio:16 / 10; }
+  .panel-layout-enabled .panel-layout-heading { min-height:45px; }
+  .panel-layout-enabled .panel-heading { align-items:flex-start; }
+  .panel-layout-enabled .panel-heading h1,.panel-layout-enabled .panel-heading h2 { overflow-wrap:anywhere; }
+}
+
+.panel-layout-enabled .panel { min-width:0; }
+.panel-layout-enabled .timeline-tools,.panel-layout-enabled .export-controls { flex-wrap:wrap; }
+.panel-layout-enabled #timeline { min-width:0; }
+.panel-layout-enabled .panel-heading { gap:8px; justify-content:flex-start; }
+.panel-layout-enabled .panel-heading > .panel-layout-tools { flex-basis:100%; margin:0; }
+@media (pointer:coarse) { .panel-layout-move,.panel-drag-handle { min-width:34px; min-height:34px; } }
