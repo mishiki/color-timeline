@@ -95,6 +95,36 @@ function normalizePalette(palette) {
   return points;
 }
 
+function normalizeDistribution(distribution) {
+  if (!distribution || typeof distribution !== "object") return null;
+  const source = Array.isArray(distribution.bins) ? distribution.bins : [];
+  const total = Number(distribution.total);
+  const bins = source.map((bin) => {
+    if (!bin || typeof bin !== "object") return null;
+    const h = Number(bin.h), v = Number(bin.v), c = Number(bin.c);
+    const count = Number(bin.count);
+    if (![h, v, c, count].every(Number.isFinite) || count <= 0
+      || h < 0 || h > 100 || v < 0 || v > 10 || c < 0 || c > CHROMA_RANGE) return null;
+    const rgb = Array.isArray(bin.rgb) && bin.rgb.length === 3
+      && bin.rgb.every((channel) => Number.isFinite(channel))
+      ? bin.rgb.map((channel) => clamp(Math.round(channel), 0, 255))
+      : [128, 150, 170];
+    return {
+      h: wrapHue(h), v, c, count, rgb,
+      hStep: Number.isFinite(Number(bin.hStep)) ? clamp(Number(bin.hStep), 0.25, 25) : 5,
+      vStep: Number.isFinite(Number(bin.vStep)) ? clamp(Number(bin.vStep), 0.05, 2) : 0.5,
+      cStep: Number.isFinite(Number(bin.cStep)) ? clamp(Number(bin.cStep), 0.25, 8) : 2.5,
+    };
+  }).filter(Boolean);
+  if (!bins.length) return null;
+  const computedTotal = bins.reduce((sum, bin) => sum + bin.count, 0);
+  return { version: 1, total: Number.isFinite(total) && total > 0 ? total : computedTotal, bins };
+}
+
+function rgbCss(rgb) {
+  return `rgb(${rgb.map((channel) => Math.round(clamp(channel, 0, 255))).join(",")})`;
+}
+
 function pointPosition(point, camera, width, height) {
   const projected = projectMunsellPoint(
     point.munsell,
@@ -163,6 +193,8 @@ export function createMunsellView(canvas, { onSelect } = {}) {
   const camera = { yaw: -0.64, pitch: 0.36, distance: 4.2 };
   const home = { ...camera };
   let points = [];
+  let distribution = null;
+  let distributionOptions = { mode: "both", scale: "log", vMin: 0, vMax: 10 };
   let positions = [];
   let width = 1;
   let height = 1;
@@ -318,6 +350,65 @@ export function createMunsellView(canvas, { onSelect } = {}) {
     }
   }
 
+  function cubeVertices(bin, response) {
+    // The histogram amount is encoded as volume: side length is proportional
+    // to the cube root of the bin share.  The cube itself is Cartesian in the
+    // displayed HVC solid; HVC is used only to locate its centre.
+    const center = worldPoint(bin.h, bin.v, bin.c);
+    const halfSize = 0.18 * Math.cbrt(clamp(response, 0, 1));
+    const vertices = [];
+    for (const y of [-halfSize, halfSize]) {
+      for (const z of [-halfSize, halfSize]) {
+        for (const x of [-halfSize, halfSize]) {
+          vertices.push(projectWorld({ x: center.x + x, y: center.y + y, z: center.z + z }));
+        }
+      }
+    }
+    return vertices;
+  }
+
+  function distributionResponse(share) {
+    const safe = clamp(share, 0, 1);
+    if (distributionOptions.scale === "linear") return safe;
+    return Math.log1p(100 * safe) / Math.log(101);
+  }
+
+  function drawDistribution() {
+    if (!distribution || distributionOptions.mode === "palette") return;
+    const bins = distribution.bins.filter((bin) => bin.v >= distributionOptions.vMin && bin.v <= distributionOptions.vMax);
+    if (!bins.length) return;
+    const total = Math.max(1e-12, distribution.total);
+    const faces = [];
+    for (const bin of bins) {
+      const share = clamp(bin.count / total, 0, 1);
+      const response = distributionResponse(share);
+      const vertices = cubeVertices(bin, response);
+      // [v,c,h] layout: c=0/1, h=0/1 within each vertical layer.
+      const faceIndices = [
+        [0, 1, 3, 2], [4, 6, 7, 5], // inner / outer chroma
+        [0, 4, 5, 1], [2, 3, 7, 6], // lower / upper V
+        [0, 2, 6, 4], [1, 5, 7, 3], // hue sides
+      ];
+      for (const indices of faceIndices) {
+        const polygon = indices.map((index) => vertices[index]);
+        const depth = polygon.reduce((sum, point) => sum + point.depth, 0) / polygon.length;
+        faces.push({ polygon, depth, bin, response, share });
+      }
+    }
+    faces.sort((a, b) => a.depth - b.depth);
+    for (const face of faces) {
+      ctx.beginPath();
+      ctx.moveTo(face.polygon[0].x, face.polygon[0].y);
+      for (let i = 1; i < face.polygon.length; i++) ctx.lineTo(face.polygon[i].x, face.polygon[i].y);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(${face.bin.rgb.join(",")},0.45)`;
+      ctx.fill();
+      ctx.strokeStyle = "rgba(220,235,248,0.18)";
+      ctx.lineWidth = 0.45;
+      ctx.stroke();
+    }
+  }
+
   function drawHueLabels() {
     ctx.font = "10px system-ui, sans-serif";
     for (let i = 0; i < 10; i++) {
@@ -351,8 +442,19 @@ export function createMunsellView(canvas, { onSelect } = {}) {
       ctx.arc(position.x, position.y, position.radius, 0, Math.PI * 2);
       ctx.fillStyle = point.rgb;
       ctx.fill();
-      ctx.strokeStyle = "rgba(4, 9, 16, .90)";
-      ctx.lineWidth = 1.5;
+      // Representative markers have a fixed size.  Their area is already
+      // reported beside the palette; using it again here would compete with
+      // the distribution bins' quantity encoding.  A light keyline keeps a
+      // pale representative visible over both dark and pale bins.
+      ctx.beginPath();
+      ctx.arc(position.x, position.y, position.radius + 1.6, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(3, 8, 15, .96)";
+      ctx.lineWidth = 3.4;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(position.x, position.y, position.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(245, 250, 255, .92)";
+      ctx.lineWidth = 1.35;
       ctx.stroke();
       if (position.radius > 7) {
         ctx.beginPath();
@@ -371,6 +473,7 @@ export function createMunsellView(canvas, { onSelect } = {}) {
     ctx.fillRect(0, 0, width, height);
     drawGrid();
     drawNeutralAxis();
+    drawDistribution();
     drawMarkers();
     drawHueLabels();
 
@@ -386,14 +489,16 @@ export function createMunsellView(canvas, { onSelect } = {}) {
     ctx.font = "9px system-ui, sans-serif";
     ctx.textAlign = "left";
     ctx.fillStyle = "#8498ad";
-    ctx.fillText("Chroma rings: C4 / C8 / C12 / … / C40", 11, 25);
+    ctx.fillText(distribution && distributionOptions.mode !== "palette"
+      ? `色分布 ${distributionOptions.scale === "log" ? "log" : "線形"} · 立方体の体積＝画素量`
+      : "Chroma rings: C4 / C8 / C12 / … / C40", 11, 25);
     ctx.fillStyle = "#8498ad";
     if (width > 520) {
-      ctx.fillText("点の面積は元面積比（最小表示あり）。C目盛は色域境界を示しません。", 11, height - 16);
+      ctx.fillText("代表点は固定サイズ。分布立方体の体積が画素量。C目盛は色域境界を示しません。", 11, height - 16);
       ctx.textAlign = "right";
       ctx.fillText("ドラッグで回転 · ホイールで拡大縮小 · Home でリセット", width - 11, height - 16);
     } else {
-      ctx.fillText("点面積＝元面積比（最小サイズあり）", 11, height - 46);
+      ctx.fillText("代表点は固定サイズ", 11, height - 46);
       ctx.fillText("C は座標目盛（色域境界ではありません）", 11, height - 31);
       ctx.textAlign = "center";
       ctx.fillText("ドラッグ回転 · ホイール拡大 · Home", width / 2, height - 16);
@@ -563,13 +668,25 @@ export function createMunsellView(canvas, { onSelect } = {}) {
     render();
   }
 
+  function setDistribution(next) {
+    distribution = normalizeDistribution(next);
+    render();
+  }
+
+  function setOptions(next = {}) {
+    const mode = ["both", "distribution", "palette"].includes(next.mode) ? next.mode : distributionOptions.mode;
+    const scale = ["log", "linear"].includes(next.scale) ? next.scale : distributionOptions.scale;
+    const vMin = Number.isFinite(Number(next.vMin)) ? clamp(Number(next.vMin), 0, 10) : distributionOptions.vMin;
+    const vMax = Number.isFinite(Number(next.vMax)) ? clamp(Number(next.vMax), vMin, 10) : distributionOptions.vMax;
+    distributionOptions = { mode, scale, vMin, vMax };
+    render();
+  }
+
   function sizeMarkers() {
     const minDimension = Math.min(width, height);
-    const minRadius = clamp(minDimension * 0.012, 3.6, 5.2);
-    const areaScale = clamp(minDimension * 0.08, 18, 32);
+    const minRadius = clamp(minDimension * 0.017, 5.5, 7.2);
     for (const point of points) {
-      const share = point.rawShare ?? point.share;
-      point.radius = Math.max(minRadius, areaScale * Math.sqrt(share));
+      point.radius = minRadius;
     }
   }
 
@@ -590,6 +707,8 @@ export function createMunsellView(canvas, { onSelect } = {}) {
 
   return {
     setPalette,
+    setDistribution,
+    setOptions,
     reset,
     destroy() {
       if (destroyed) return;

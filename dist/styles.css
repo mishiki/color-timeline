@@ -303,7 +303,7 @@ input[type="range"] { accent-color: var(--accent); }
 .munsell-panel { padding-bottom: 13px; }
 .munsell-panel .panel-heading { min-height: 58px; }
 .munsell-panel .panel-heading .button { min-height: 29px; padding: 0 9px; font-size: 11px; }
-#munsellCanvas { display: block; width: 100%; height: auto; aspect-ratio: 13 / 10.5; touch-action: none; cursor: grab; }
+#munsellCanvas { display: block; width: 100%; height: auto; aspect-ratio: 1; touch-action: none; cursor: grab; }
 #munsellCanvas:active { cursor: grabbing; }
 .munsell-info, .munsell-selection { margin: 8px 16px 0; color: #94a8bf; font-size: 11px; line-height: 1.65; }
 .munsell-selection { min-height: 18px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border-soft); color: #c3d3e4; font-variant-numeric: tabular-nums; }
@@ -317,3 +317,13 @@ input[type="range"] { accent-color: var(--accent); }
 .region-dialog input { width: 200px; vertical-align: middle; margin: 12px; }
 .region-message, #regionNote { font-size: 12px; line-height: 1.6; color: #a9bdd3; }
 
+
+.munsell-controls { display:flex; flex-wrap:wrap; gap:10px; padding:0 16px; font-size:11px; }
+.munsell-controls label { flex:1; min-width:90px; }
+.munsell-controls select { display:block; width:100%; }
+.munsell-controls .munsell-v { flex-basis:100%; }
+.munsell-v input { width:46%; margin-right:2%; }
+
+.munsell-panel.expanded { position:fixed; z-index:1000; inset:16px; margin:auto; width:min(1000px,calc(100vw - 32px)); overflow:auto; box-shadow:0 0 0 100vmax #000b; }
+.munsell-panel.expanded #munsellCanvas { width:100%; height:65vh; aspect-ratio:auto; }
+.munsell-panel.expanded { background:#101b2b; }

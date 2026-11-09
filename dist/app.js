@@ -158,7 +158,7 @@ async function analyzeSource(media,t,gen=generation,signal=null){
   if(!project||gen!==generation)return;
   if(!currentAlgorithm()){notifyLegacyProject();return;}
   if(project.kind==='video')t=Math.min(t,Math.max(0,project.duration-.001));
-  const key=timeKey(t,project.settings.interval);if(samples.get(key)?.hue)return;
+  const key=timeKey(t,project.settings.interval);if(samples.get(key)?.hue&&samples.get(key)?.munsellDistribution)return;
   const width=media.videoWidth||media.naturalWidth,height=media.videoHeight||media.naturalHeight;if(!width||!height)return;
   const scale=Math.min(1,project.settings.sampleSize/Math.max(width,height));canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
   ctx.drawImage(media,0,0,canvas.width,canvas.height);const rgba=ctx.getImageData(0,0,canvas.width,canvas.height).data;
@@ -166,7 +166,7 @@ async function analyzeSource(media,t,gen=generation,signal=null){
   const result=await new Promise((resolve,reject)=>{jobs.set(id,{resolve,reject});worker.postMessage({id,rgba:rgba.buffer,width:canvas.width,height:canvas.height,settings:project.settings,regions:project.kind==='image'?project.regions:null},[rgba.buffer]);});
   if(gen!==generation||project?.id!==projectId||signal?.aborted)return;
   if(!result.palette.length)return;
-  const sample={timeKey:key,t,palette:result.palette,hue:result.hue};samples.set(key,sample);
+  const sample={timeKey:key,t,palette:result.palette,hue:result.hue,munsellDistribution:result.munsellDistribution};samples.set(key,sample);
   if(project.kind==='capture')project.duration=Math.max(project.duration,t+project.settings.interval);
   try{await putSample(projectId,sample);if(samples.size%20===0||project.kind==='image')await persistProject();}
   catch(e){storageOK=false;$('storageStatus').textContent='保存失敗。JSONで解析データを保管してください。';status('保存エラー: '+e.message,true);}
@@ -204,7 +204,7 @@ async function scan(){
   try{const count=Math.ceil(project.duration/project.settings.interval);
     for(let i=0;i<count;i++){
       if(control.signal.aborted||gen!==generation)break;
-      const t=i*project.settings.interval;if(samples.get(timeKey(t,project.settings.interval))?.hue)continue;
+      const t=i*project.settings.interval;if(samples.get(timeKey(t,project.settings.interval))?.hue&&samples.get(timeKey(t,project.settings.interval))?.munsellDistribution)continue;
       await seek(t,control.signal);if(control.signal.aborted||gen!==generation)break;await analyzeSource(decoder,t,gen,control.signal);
       if(i%10===0)await new Promise(resolve=>setTimeout(resolve,0));
     }
@@ -262,7 +262,8 @@ function render(){
       const li=document.createElement('div');li.className='palette-item';const sw=document.createElement('i');sw.style.background=hexColor;const name=document.createElement('code');name.textContent=`${label} ${hexColor}`;name.title=name.textContent;const metrics=document.createElement('span');metrics.className='palette-metrics';metrics.textContent=`${areaLabel} ${(areaShare*100).toFixed(1)}% · 元 ${(rawShare*100).toFixed(1)}% · 幅 ${(p.width*100).toFixed(1)}%`;li.append(sw,name,metrics);$('paletteLegend').append(li);
     });}else $('paletteLegend').textContent=project?'この時刻は未解析':'動画または画像を開いてください';
     const munsellKey=`${project?.id||''}:${sample?.timeKey??'none'}:${$('topN').value}:${$('paletteOrder').value}:${project?.settings?.logStrength??0}`;
-    if(munsellKey!==munsellViewKey||sample!==munsellSampleRef){const points=displayed.filter(p=>!p.isOther).map(p=>({...p,munsell:munsellForPalette(p)}));munsellView.setPalette(points);showMunsellSelection(null);munsellViewKey=munsellKey;munsellSampleRef=sample;}
+    if(munsellKey!==munsellViewKey||sample!==munsellSampleRef){const points=displayed.filter(p=>!p.isOther).map(p=>({...p,munsell:munsellForPalette(p)}));munsellView.setPalette(points);munsellView.setDistribution(sample?.munsellDistribution);showMunsellSelection(null);munsellViewKey=munsellKey;munsellSampleRef=sample;}
+    $('munsellDistributionInfo').textContent=sample?.munsellDistribution?`${sample.munsellDistribution.bins.length}区画 · ${sample.munsellDistribution.total.toLocaleString()}画素（領域重みなし）`:sample?'分布は未保存です。元ファイルを再指定し、動画は先読み解析で追加できます。':'画像・動画を開くと全画素の分布を表示します。';
     const total=project?project.kind==='image'?1:Math.ceil(project.duration/project.settings.interval):0;
     $('analysisProgress').value=total?Math.min(100,samples.size/total*100):0;$('progressLabel').textContent=`${samples.size.toLocaleString()} / ${total.toLocaleString()} 点`;
     const range=viewRange();$('timelineStart').textContent=formatTime(range[0]);$('timelineEnd').textContent=formatTime(range[1]);
@@ -325,6 +326,13 @@ for(const id of ['mergeDelta','chromaTopPercent','logStrength'])$(id).oninput=sy
 for(const id of ['mergeDelta','chromaTopPercent','logStrength','sampleInterval','sampleSize'])$(id).addEventListener('change',()=>{if(project)status('設定変更は「設定を適用して別解析」で反映します。');});
 $('applySettingsBtn').onclick=async()=>{if(!sourceFile){status('設定を適用するには元ファイルを開いてください。');return;}try{const file=sourceFile,handle=sourceHandle;await persistProject();await loadFile(file,handle);}catch(e){fail(e);}};
 $('munsellResetBtn').onclick=()=>munsellView.reset();
+function expandMunsell(on){const panel=$('munsellCanvas').closest('.munsell-panel');panel.classList.toggle('expanded',on);$('munsellExpandBtn').textContent=on?'閉じる':'拡大表示';$('munsellExpandBtn').setAttribute('aria-expanded',String(on));}
+$('munsellExpandBtn').onclick=()=>expandMunsell(!$('munsellCanvas').closest('.munsell-panel').classList.contains('expanded'));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')expandMunsell(false);});
+for(const id of ['munsellMode','munsellScale','munsellVMin','munsellVMax'])$(id).addEventListener('input',()=>{
+ let lo=+$('munsellVMin').value,hi=+$('munsellVMax').value;if(lo>hi){if(id==='munsellVMin')$('munsellVMax').value=hi=lo;else $('munsellVMin').value=lo=hi;}
+ $('munsellVOut').textContent=`${lo.toFixed(1)}–${hi.toFixed(1)}`;munsellView.setOptions({mode:$('munsellMode').value,scale:$('munsellScale').value,vMin:lo,vMax:hi});
+});
 $('exportJsonBtn').onclick=exportJSON;$('exportCsvBtn').onclick=exportCSV;$('exportPngBtn').onclick=exportPNG;
 $('copyDiagnosticsBtn').onclick=copyDiagnostics;
 $('editRegionsBtn').onclick=()=>{if(project?.kind!=='image'||!currentAlgorithm()||!sourceFile)return;const target=project.id;editRegions(still,project.regions,async regions=>{try{if(project?.id!==target)return;const gen=++generation;project.regions=regions;samples.clear();munsellViewKey=null;render();await persistProject();await analyzeSource(still,0,gen);if(gen!==generation)return;status('領域の重みを反映しました。表示比率は加重面積比です。');}catch(e){fail(e);}});};

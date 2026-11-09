@@ -1,5 +1,6 @@
 export const VERSION = 'iscc-nbs-13-chroma-v3';
 export const LEGACY_VERSION = 'b-family-1';
+import { validateMunsellDistribution } from './munsell-distribution.js';
 export function timeKey(t, interval) { return Math.round(Math.floor((t + 1e-7) / interval) * interval * 1000); }
 export function formatTime(t) {
   if (!Number.isFinite(t)) return '—';
@@ -55,7 +56,9 @@ export function validateImport(data) {
       if(h.count.some((n,i)=>!Number.isInteger(n)||h.s[i]>n+1e-7||h.v[i]>n+1e-7||h.sv[i]>Math.min(h.s[i],h.v[i])+1e-7)||h.count.reduce((a,b)=>a+b,0)+h.achromatic!==h.total)throw Error('色相分布の合計が不正です');
       hue={total:h.total,achromatic:h.achromatic,count:h.count.slice(),s:h.s.slice(),v:h.v.slice(),sv:h.sv.slice()};
     }
-    return {timeKey:row.timeKey,t:row.t,palette,...(hue?{hue}:{})};
+    let munsellDistribution;
+    if(row.munsellDistribution!==undefined)munsellDistribution=validateMunsellDistribution(row.munsellDistribution);
+    return {timeKey:row.timeKey,t:row.t,palette,...(hue?{hue}:{}),...(munsellDistribution?{munsellDistribution}:{})};
   });
   let regions;
   if(p.regions){
