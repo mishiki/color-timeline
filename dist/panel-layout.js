@@ -40,8 +40,8 @@ export function initPanelLayout(workspace, { onLayoutChange } = {}) {
   const inspector = workspace.querySelector(":scope > .inspector-column");
   if (!editor || !inspector || map.size !== IDS.length) return () => {};
   const defaults = {
-    left: [...editor.querySelectorAll(":scope > .panel")].map((p) => p.dataset.panelId),
-    right: [...inspector.querySelectorAll(":scope > .panel")].map((p) => p.dataset.panelId),
+    left: ["media", "munsell"],
+    right: ["current", "hue", "settings", "notes", "analysis", "timeline"],
   };
   const saved = readState();
   let columns = complete(...(saved ? [saved.columns.left, saved.columns.right] : [defaults.left, defaults.right]));
