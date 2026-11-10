@@ -426,6 +426,7 @@ export function createMunsellView(canvas, { onSelect } = {}) {
   }
 
   function drawMarkers() {
+    if (distributionOptions.mode === "distribution") { positions = []; return; }
     positions = points.map((point) => pointPosition(point, camera, width, height));
     const order = points.map((point, index) => ({ point, position: positions[index], index }))
       .sort((a, b) => a.position.depth - b.position.depth);
@@ -503,7 +504,7 @@ export function createMunsellView(canvas, { onSelect } = {}) {
       ctx.textAlign = "center";
       ctx.fillText("ドラッグ回転 · ホイール拡大 · Home", width / 2, height - 16);
     }
-    if (!points.length) {
+    if (!points.length && distributionOptions.mode !== "distribution") {
       ctx.textAlign = "center";
       ctx.font = "10px system-ui, sans-serif";
       ctx.fillStyle = "#8194a8";
@@ -512,6 +513,7 @@ export function createMunsellView(canvas, { onSelect } = {}) {
   }
 
   function findPoint(x, y) {
+    if (distributionOptions.mode === "distribution") return -1;
     const candidates = points.map((point, index) => ({ point, index, position: positions[index] }))
       .sort((a, b) => b.position.depth - a.position.depth);
     for (const candidate of candidates) {
@@ -679,6 +681,7 @@ export function createMunsellView(canvas, { onSelect } = {}) {
     const vMin = Number.isFinite(Number(next.vMin)) ? clamp(Number(next.vMin), 0, 10) : distributionOptions.vMin;
     const vMax = Number.isFinite(Number(next.vMax)) ? clamp(Number(next.vMax), vMin, 10) : distributionOptions.vMax;
     distributionOptions = { mode, scale, vMin, vMax };
+    hovered = -1; selected = -1; updateTooltip(null); callOnSelect(-1);
     render();
   }
 
